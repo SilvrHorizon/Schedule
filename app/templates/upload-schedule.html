@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {% if msg %}
+        <h1>{{ msg }}</h1>
+    {% endif %}
+
+    <form method=post enctype=multipart/form-data>
+        <p>
+            <input type=file name=image>
+            <input type=submit value=Upload> 
+        </p>
+    </form>
+
+    <p>
+        Hej, hej pojkar nu får ni ta del av min programm testning, tack så mycket!
+        Det ni gör är att ni tar era bilder som ni har på ert schoolsoft schema, beskär det så att endast själva schema biten är kvar.
+        När ni beskärt er bild i kamerarullen laddar ni sedan upp den beskärda bilden på hemsidan och trycker ladda upp.
+        Hemsidan kommer ladda ett tag och sedan får ni ert schema i textform. Jämnför det gärna med erat faktiska schema och berätta sedan för mig hur bra det stämmde.
+        TACK SÅ MYCKET :D
+
+    </p>
+
+{% endblock %}
