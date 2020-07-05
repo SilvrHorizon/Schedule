@@ -4,10 +4,10 @@ import cv2
 
 from app import App
 from ScheduleImageProcessor import findCourses
-import base64
+
 from PIL import Image
 from io import BytesIO
-import binascii
+
 
 
 
@@ -39,9 +39,9 @@ def uploadSchedule():
             for course in courses:
                 builder += '<p>'
                 try:
-                    builder += '{} på {} kl: {:02d}:{:02d} till {:02d}:{:02d}'.format(course.courseName, days[course.weekDay], course.begins[0],course.begins[1], course.ends[0], course.ends[1])
+                    builder += '{} på {} kl: {:02d}:{:02d} till {:02d}:{:02d}'.format(course.courseName, days[course.weekDay], course.begins[0], course.begins[1], course.ends[0], course.ends[1])
                 except:
-                    builder += '<p>En kurs som hade en 5:a som blev till ett S ska fixa det sedan</p>'
+                    builder += 'En kurs fick innehåller inte nog med data för att visas'
                 builder += '</p>'
             return builder
         else:
@@ -49,3 +49,7 @@ def uploadSchedule():
  
 
     return render_template('upload-schedule.html')
+
+@App.route('/login')
+def login():
+    pass
