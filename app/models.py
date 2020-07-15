@@ -14,10 +14,12 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(64), index=True)
     last_name = db.Column(db.String(64), index=True)
     email = db.Column(db.String(64), index=True, unique=True)
-
+        
     follows = db.relationship('User', secondary=followers, primaryjoin=(followers.c.follower_id == id), secondaryjoin=(followers.c.followed_id == id), backref=db.backref('followers', lazy='dynamic'), lazy='dynamic')
 
     schedules = db.relationship('Schedule', backref="user", lazy='dynamic')
+
+    
 
     def follow(self, user):
         if not self.is_following(user):

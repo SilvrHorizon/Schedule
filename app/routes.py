@@ -22,6 +22,8 @@ from ScheduleImageProcessor import findCourses
 from customUtilities.time import hour_minute_to_minutes, format_minutes
 from customUtilities.schedulemanip import getBinaryRepresentation
 
+from app.forms import UserSearchForm
+
 # oAuth2 client setup
 oauthClient = WebApplicationClient(Config.GOOGLE_CLIENT_ID)
 
@@ -135,7 +137,7 @@ def login_callback():
         if user is not None:
             login_user(user, True)
         else:
-            u = User(first_name=userinfo_response.json()["given_name"], last_name=userinfo_response.json()["family_name"], email=userinfo_response.json()["email"], google_id=userinfo_response.json()["sub"])
+            u = User(first_name=userinfo_response.json()["given_name"].lower(), last_name=userinfo_response.json()["family_name"].lower(), email=userinfo_response.json()["email"], google_id=userinfo_response.json()["sub"])
             db.session.add(u)
             db.session.commit()
             login_user(u, True)
@@ -161,3 +163,28 @@ def show_schedule():
         return bin
 
     return render_template('my-schedule.html')
+
+
+@App.route('/search-for-user')
+def user_search():
+    
+
+    print(request.args)
+    print(len(request.args))
+
+    # TODO perform validation
+    if len(request.args) > 0:
+        # email=request.args["email"],
+        print(request.args["first_name"])
+        users = User.query.filter_by(first_name=request.args["first_name"])
+        b = "fuuuu"
+        print(users[0].__repr__())
+        for u in users:
+            b += repr(u)
+            print(u, b)
+
+        return b
+
+    form = UserSearchForm()
+    return render_template('search-for-user.html', form=form)
+
