@@ -10,6 +10,7 @@ followers = db.Table('followers', db.Column('follower_id', db.Integer, db.Foreig
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    public_id = db.Column(db.String(50))
     google_id = db.Column(db.String(32), index=True)
     first_name = db.Column(db.String(64), index=True)
     last_name = db.Column(db.String(64), index=True)
@@ -18,8 +19,6 @@ class User(UserMixin, db.Model):
     follows = db.relationship('User', secondary=followers, primaryjoin=(followers.c.follower_id == id), secondaryjoin=(followers.c.followed_id == id), backref=db.backref('followers', lazy='dynamic'), lazy='dynamic')
 
     schedules = db.relationship('Schedule', backref="user", lazy='dynamic')
-
-    
 
     def follow(self, user):
         if not self.is_following(user):

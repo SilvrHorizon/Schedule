@@ -1,5 +1,5 @@
 # Flask related imports
-from flask import render_template, request, url_for, redirect, abort
+from flask import render_template, request, url_for, redirect, abort, flash
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 
 # For Google oAuth
@@ -102,6 +102,14 @@ def login():
 
     return redirect(request_uri)
 
+@App.route('/signup')
+def signup():
+
+    return ''
+
+@App.route('/logout'):
+    pass
+
 
 @App.route('/')
 def index():
@@ -110,6 +118,40 @@ def index():
     else:
         return "Index"
 
+
+@App.route('/signup/callback')
+def signup_callback():
+    code = request.args.get("code")
+
+    google_config = get_google_provider_config()
+    token_endpoint = google_config["token_endpoint"]
+
+    token_url, headers, body = oauthClient.prepare_token_request(token_endpoint, authorization_response=request.url, redirect_url=request.base_url, code=code)
+    token_response = requests.post(token_url, headers=headers, data=body, auth=(Config.GOOGLE_CLIENT_ID, Config.GOOGLE_CLIENT_SECRET))
+
+    oauthClient.parse_request_body_response(json.dumps(token_response.json()))
+
+    userinfo_endpoint = google_config["userinfo_endpoint"]
+    uri, headers, body = oauthClient.add_token(userinfo_endpoint)
+
+    userinfo_response = requests.get(uri, headers=headers, data=body)
+    if userinfo_response.json().get("email_verified"):
+        email = userinfo_response.json()["email"]
+
+        u = User.query.filter_by(email=email).first()
+
+        if u is not None:
+            redirect(url_for('login'))
+
+        google_id = userinfo_response.json()["sub"]
+        first_name = userinfo_response.json()["given_name"].lower()
+        last_name = userinfo_response.json()["family_name"].lower()
+
+
+        u = User(google_id=google_id, first_name=first_name, last_name=last_name)
+
+        db.session.add(u)
+        db.session.commit()
 
 @App.route('/login/callback')
 def login_callback():
