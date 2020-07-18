@@ -1,13 +1,13 @@
 import numpy as np
 import cv2
 import pytesseract
-from skimage.transform import rescale
+#from skimage.transform import rescale
 from ScheduleImageProcessor.course import Course 
 
 
 
 #Initiate pytesseract
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+pytesseract.pytesseract.tesseract_cmd = r"C:\Jonathan\Program\Tesseract-OCR\tessetact.exe"
 
 def checkLine(line):
     for i in line:
