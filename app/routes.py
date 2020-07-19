@@ -6,6 +6,9 @@ from flask_login import LoginManager, current_user, login_required, login_user, 
 from oauthlib.oauth2 import WebApplicationClient
 import requests
 
+#UUID
+import uuid
+
 # For image processing
 import numpy as np
 import cv2
@@ -100,20 +103,27 @@ def login():
 
     request_uri = oauthClient.prepare_request_uri(authorization_endpoint, redirect_uri=request.base_url + "/callback", scope=["openid", "email", "profile"])
 
-    return redirect(request_uri)
+    return render_template('login.html', google_auth_url=request_uri)
 
 @App.route('/signup')
 def signup():
+    authorization_endpoint = get_google_provider_config()["authorization_endpoint"]
+    request_uri = oauthClient.prepare_request_uri(authorization_endpoint, redirect_uri=request.base_url + "/callback", scope=["openid", "email", "profile"])
 
-    return ''
+    return redirect(request_uri)
 
-@App.route('/logout'):
-    pass
+@login_required
+@App.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+    
 
 
 @App.route('/')
 def index():
     if current_user.is_authenticated:
+        print(current_user)
         return "logged in as {}".format(current_user.email)
     else:
         return "Index"
@@ -140,18 +150,25 @@ def signup_callback():
 
         u = User.query.filter_by(email=email).first()
 
+        print("User: ", u)
         if u is not None:
-            redirect(url_for('login'))
+            flash("Det finns redan ett konto anknytet till denna mail, var god och logga in.")
+            return redirect(url_for('login'))
 
         google_id = userinfo_response.json()["sub"]
         first_name = userinfo_response.json()["given_name"].lower()
         last_name = userinfo_response.json()["family_name"].lower()
 
-
-        u = User(google_id=google_id, first_name=first_name, last_name=last_name)
+        print(email)
+        u = User(google_id=google_id, first_name=first_name, last_name=last_name, email=email, public_id=str(uuid.uuid4))
 
         db.session.add(u)
         db.session.commit()
+
+        u = User.query.filter_by(google_id=google_id).first()
+        login_user(u)
+
+    return redirect(url_for('index')) 
 
 @App.route('/login/callback')
 def login_callback():
@@ -171,22 +188,15 @@ def login_callback():
     userinfo_response = requests.get(uri, headers=headers, data=body)
 
 
-    if userinfo_response.json().get("email_verified"):
-        google_id = userinfo_response.json()["sub"]
-        print(google_id)
-        user = User.query.filter_by(google_id=google_id).first()
+    google_id = userinfo_response.json()["sub"]
+    user = User.query.filter_by(google_id=google_id).first()
 
-        if user is not None:
-            login_user(user, True)
-        else:
-            u = User(first_name=userinfo_response.json()["given_name"].lower(), last_name=userinfo_response.json()["family_name"].lower(), email=userinfo_response.json()["email"], google_id=userinfo_response.json()["sub"])
-            db.session.add(u)
-            db.session.commit()
-            login_user(u, True)
+    if user is not None:
+        login_user(user, True)
+        return redirect(url_for('index'))
     else:
-        return "Email not verified!"
-
-    return redirect(url_for('index'))
+        flash('Det finns inget konto knytet till denna mail, var god och skapa ett.')
+        redirect(url_for('signup'))
 
 @login_required
 @App.route('/my-schedule', methods=['GET'])
