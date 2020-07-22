@@ -1,2 +1,51 @@
 {% extends "base.html" %}
 
+{% block head %}
+    <style>
+        
+    </style>
+{% endblock %}
+
+{% block content %}
+    {% if current_user.is_authenticated %}
+        <div class="container-fluid">
+            <p> you are logged in as {{ current_user.email }}</p>
+        </div>
+        
+        <div id="common_times_table" class="container-fluid">
+            <!---
+            <table>
+                <tr>
+                    <th>Jonathan</th>
+                    <th>Axel</th>
+                    <th>Fabian</th>
+                </tr>
+                <tr>
+                    <td>10:30-11:00</td>
+                    <td>10:30-11:00</td>
+                    <td>10:30-11:00</td>
+                </tr>
+                <tr>
+                    <td>10:30-11:00</td>
+                    <td>10:30-11:00</td>
+                    <td>10:30-11:00</td>
+                </tr>
+                <tr>
+                    <td>10:30-11:00</td>
+                    <td>10:30-11:00</td>
+                    <td>10:30-11:00</td>
+                </tr>
+            </table>
+            -->
+        </div>
+
+    {% else %}
+        <h1>Login</h1>
+        <a href={{ google_auth_url }}>Login</a>
+    {% endif %}
+    
+{% endblock %}
+
+{% block scripts%}
+    <script type="text/javascript" src="{{ url_for('static', filename='index.js')}}"></script>
+{% endblock %}

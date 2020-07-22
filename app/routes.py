@@ -1,5 +1,5 @@
 # Flask related imports
-from flask import render_template, request, url_for, redirect, abort, flash
+from flask import render_template, request, url_for, redirect, abort, flash, jsonify
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 
 # For Google oAuth
@@ -23,7 +23,8 @@ from app.models import User, Schedule, Class, DayBinaryRepresentation
 from app import App
 from ScheduleImageProcessor import findCourses
 from customUtilities.time import hour_minute_to_minutes, format_minutes
-from customUtilities.schedulemanip import getBinaryRepresentation
+from customUtilities.schedulemanip import getBinaryRepresentation, getFreeTime, extract_breaks
+from customUtilities.math import common_spans
 
 from app.forms import UserSearchForm
 
@@ -117,16 +118,33 @@ def signup():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+@login_required
+@App.route('/api/friends-today')
+def api_friends_today():
+
+    other = User.query.get(1)
     
+    #TODO what if one does not have a schedule that day and week?
+    #TODO make it so that it returns the correct weekday
+    other_schedule = other.schedules.filter_by(week_number=-1).first()
+    my_schedule = current_user.schedules.filter_by(week_number=-1).first()
+    
+    other_breaks = extract_breaks(other_schedule, 0)
+    my_breaks = extract_breaks(my_schedule, 0)
 
 
+    common = common_spans(my_breaks, other_breaks)
+
+    print('returning')
+    return jsonify([{"public_id": other.public_id, "first_name" : other.first_name, "last_name" : other.last_name, 
+        "common_free_time": common}]) 
+ 
+@App.route('/index')
 @App.route('/')
 def index():
-    if current_user.is_authenticated:
-        print(current_user)
-        return "logged in as {}".format(current_user.email)
-    else:
-        return "Index"
+    print(request.headers)
+    return render_template('index.html')
 
 
 @App.route('/signup/callback')
@@ -160,7 +178,7 @@ def signup_callback():
         last_name = userinfo_response.json()["family_name"].lower()
 
         print(email)
-        u = User(google_id=google_id, first_name=first_name, last_name=last_name, email=email, public_id=str(uuid.uuid4))
+        u = User(google_id=google_id, first_name=first_name, last_name=last_name, email=email, public_id=str(uuid.uuid4()))
 
         db.session.add(u)
         db.session.commit()
@@ -201,26 +219,30 @@ def login_callback():
 @login_required
 @App.route('/my-schedule', methods=['GET'])
 def show_schedule():
+    if not current_user.is_authenticated:
+        return "Du är inte inloggad, inget personligt schema kan visas"
+
     week_number = request.args.get("week_number")
     if week_number:
         week_number = int(week_number)
+    else:
+        week_number = -1
 
-        schedule = Schedule.query.filter_by(user=current_user, week_number=week_number).first()
-        if not schedule:
-            schedule = Schedule.query.filter_by(user=current_user, week_number=week_number).first()
-        if not schedule:
-            abort(404, "Du har inget standard schema inlagt")
+    schedule = Schedule.query.filter_by(user_id=current_user.id, week_number=week_number).first()
+    
+    #Fall back on the standard schedule if there is no specific schedule for that week
+    if not schedule:
+        schedule = Schedule.query.filter_by(user_id=current_user.id, week_number=-1).first()
+    
+    if not schedule:
+        abort(404, "Du har inget standard schema inlagt")
 
-        bin = getBinaryRepresentation(Class.query.filter_by(schedule=schedule, weekday=0).all())
-        return bin
-
-    return render_template('my-schedule.html')
+    print(schedule.classes.all())
+    return render_template('my-schedule.html', classes=schedule.classes.all())
 
 
 @App.route('/search-for-user')
 def user_search():
-    
-
     print(request.args)
     print(len(request.args))
 

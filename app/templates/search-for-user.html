@@ -2,6 +2,7 @@
 
 {% block content %}
     <form method="GET">
+        {{ form.csrf_token }}
         {{ form.first_name.label }} {{ form.first_name(size=20) }}
 
         <input type="submit" value="Sök">

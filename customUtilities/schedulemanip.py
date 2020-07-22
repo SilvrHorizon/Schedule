@@ -10,15 +10,17 @@ TRACK_ENDS = int(hour_minute_to_minutes([17, 30]))
 TRACK_MINUTE_RESOLUTION = int(5)
 TOTAL_BITS = (TRACK_ENDS - TRACK_BEGINS) // TRACK_MINUTE_RESOLUTION
 
-def getFreeTime(binary, includeFirst=True, includeLast=True):
-    if not includeFirst:
-        checkbit = 1 << 0
-        while not(checkbit & binary):
-            binary |= checkbit
-            checkbit = checkbit << 1
-    
+def getFreeTime(binary, includeFirst=False, includeLast=False):
     checkbit = 1
-
+    
+    if not includeFirst:
+        shifted = 0
+        checkbit = 1 << shifted
+        while not(checkbit & binary) and shifted <= TOTAL_BITS:
+            binary |= checkbit
+            shifted += 1
+            checkbit = checkbit << shifted
+    
     upto = 1 << TOTAL_BITS
 
     onFree = False
@@ -86,8 +88,17 @@ def getBinaryRepresentation(courses):
 
     return binary
 
+from app.models import Class, Schedule
+def extract_breaks(schedule, day):
+    print("query began")
+    classes = Class.query.filter_by(schedule_id = schedule.id, weekday=day).order_by(Class.begins).all()
+    
+    breaks = []
+    for i in range(len(classes) - 1):
+        breaks.append( [classes[i].ends, classes[i+1].begins] )
 
-        
+    return breaks
+
              
 
 

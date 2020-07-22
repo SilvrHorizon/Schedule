@@ -1,9 +1,16 @@
 {% extends "base.html " %}
 
 {% block content %}
+<div class="container-fluid">
     <form method="GET">
         <input type="number", name="week_number", min="-1", max="52">
         <input type="submit", value="Visa schema">
     </form>
 
+    {% if classes %}
+        {% for class in classes %}
+            <p>{{ class.course }} på {{ class.weekday}} från {{ format_minutes(class.begins) }} till {{ format_minutes(class.ends) }}</p>
+        {% endfor %}
+    {% endif %}
+</div>
 {% endblock %}
