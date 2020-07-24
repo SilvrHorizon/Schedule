@@ -6,7 +6,19 @@ from app import db
 from customUtilities.time import format_minutes
 
 
-followers = db.Table('followers', db.Column('follower_id', db.Integer, db.ForeignKey('user.id')), db.Column('followed_id', db.Integer, db.ForeignKey('user.id')))
+#followers = db.Table('followers', db.Column('level', db.Integer), db.Column('follower_id', db.Integer, db.ForeignKey('user.id')), db.Column('followed_id', db.Integer, db.ForeignKey('user.id')))
+class Follow(db.Model):
+    follower_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    followed_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+
+    priority_level = db.Column(db.SmallInteger)
+
+    #follower = db.relationship('User', backref='following', primaryjoin(), lazy='dynamic')
+    #followed = db.relationship('User', backref='followers', foreign_keys=[followed_id], lazy='dynamic')
+    
+    #
+    #followed = db.relationship('User', backref='followers')
+
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -15,21 +27,41 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(64), index=True)
     last_name = db.Column(db.String(64), index=True)
     email = db.Column(db.String(64), index=True, unique=True)
-        
-    follows = db.relationship('User', secondary=followers, primaryjoin=(followers.c.follower_id == id), secondaryjoin=(followers.c.followed_id == id), backref=db.backref('followers', lazy='dynamic'), lazy='dynamic')
+
+    followers = db.relationship('Follow', primaryjoin=(Follow.followed_id == id), backref='followed', lazy='dynamic')
+    following = db.relationship('Follow', primaryjoin=(Follow.follower_id == id), backref='follower', lazy='dynamic')
+
+    #follows = db.relationship('Follow', )
+    '''
+    follows = db.relationship('User', secondary=Follow, primaryjoin=(Follow.follower_id == id), 
+        secondaryjoin=(Follow.followed_id == id), 
+        backref=db.backref('tetetet', lazy='dynamic'), 
+        lazy='dynamic')
+    '''
 
     schedules = db.relationship('Schedule', backref="user", lazy='dynamic')
 
-    def follow(self, user):
+    
+    def follow(self, user, level):
+        rel = Follow.query.filter_by(followerf_id=self.id, followed_id=user.id)
+        if rel.count() > 0:
+            rel.first().priority_level = level
+        else:
+            association = Follow(followed_id=user.id, priority_level=level)
+            self.following.append(association)
+
         if not self.is_following(user):
             self.follows.append(user)
 
     def unfollow(self, user):
+        Follow.query.filter_by(follower_id=self.id, followed_id=user.id).delete()
         if self.is_following(user):
             self.follows.remove(user)
+        
     
     def is_following(self, user):
-        return self.follows.filter(followers.c.followed_id == user.id).count() > 0 
+        return self.following.filter(Follow.followed_id == user.id).count() > 0 
+    
 
     def __repr__(self):
         return '<User {}>'.format(self.email)
