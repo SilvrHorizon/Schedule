@@ -19,11 +19,14 @@ class Follow(db.Model):
     #
     #followed = db.relationship('User', backref='followers')
 
+    def __repr(self):
+        return f'{follower} follows {followed} with {priority_level}'
+
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    public_id = db.Column(db.String(50))
-    google_id = db.Column(db.String(32), index=True)
+    public_id = db.Column(db.String(50), index=True, unique=True)
+    google_id = db.Column(db.String(32), index=True, unique=True)
     first_name = db.Column(db.String(64), index=True)
     last_name = db.Column(db.String(64), index=True)
     email = db.Column(db.String(64), index=True, unique=True)
@@ -43,7 +46,7 @@ class User(UserMixin, db.Model):
 
     
     def follow(self, user, level):
-        rel = Follow.query.filter_by(followerf_id=self.id, followed_id=user.id)
+        rel = Follow.query.filter_by(follower_id=self.id, followed_id=user.id)
         if rel.count() > 0:
             rel.first().priority_level = level
         else:

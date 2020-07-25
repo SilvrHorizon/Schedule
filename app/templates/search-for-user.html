@@ -2,10 +2,108 @@
 
 {% block content %}
     <form method="GET">
-        {{ form.csrf_token }}
-        {{ form.first_name.label }} {{ form.first_name(size=20) }}
+        <input type="search" name="first_name", placeholder="First name">
+        <input type="search" name="email", placeholder="Email">
+        <input type="search" name="last_name", placeholder="Last name">
 
         <input type="submit" value="Sök">
     </form>
 
+    <div id="result-display-block" class="container"></div>
+{% endblock %}
+
+{% block scripts %}
+    {% if results%}
+    <script type="text/javascript">
+
+    
+    let csrfToken = "{{ csrf_token() }}";
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings){
+            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrfToken);
+            }
+        }
+    })
+     
+
+    let results = {
+        {% for result in results %}
+        "{{ result.public_id }}" : {
+            "email": "{{ result.email }}",
+            {% if follows[result.id] %}
+                "following": {{follows[result.id]}}
+            {% else %}
+            "following": 0
+            {% endif %}
+        },
+        {% endfor %}
+    }
+    
+    for(let key in results){
+        element = $("#result-display-block")
+        build = "<div id=\"search-result-" + key + "\">"
+        //TODO remember to sanitize output
+        //TODO make this into a table
+        build += "<p class=\"col-xs-8 col-sm-8 col-md-8 col-lg-8\">"
+        build += results[key].email
+        build += "</p>"
+        build += "<div class=\"row\">"
+            build += createSelectRange(key, results[key].following)
+            //build += "<button class=\"btn btn-primary col-xs-2 col-sm-2 col-md-2 col-lg-2\" type=\"button\" id=\"update-button-" + key + "\" onclick=\"follow_incomplete('" + key + "')\" disabled>Uppdatera</button>"
+        build += "</div>"
+        build += "</p>"
+        build += "</div><hr>"
+        element.append(build)
+    }
+    
+    function createSelectRange(result_id, selected_option){
+        build = "<select onChange=\"follow_incomplete('" + result_id + "')\" class=\"col-xs-4\" id=\"" + ("result-priority-level-" + result_id) + "\">";
+        build += "<option value=\"0\" "
+        if(selected_option == 0){
+            build += "selected" 
+        }
+
+        build += ">Oföljd</option>"
+        for(let i = 1; i <= 4; i++){
+            build += "<option ";
+            if(selected_option == i){
+                build += "selected"
+            }
+            build += ">" + i + "</option>"        
+        }
+        build += "</select>";
+        return build
+    }
+    /*
+    function update_button(public_id){
+        console.log($('#result-priority-level-' + public_id).val())
+        console.log(results[public_id].following)
+        if(results[public_id].following == $('#result-priority-level-' + public_id).val()){
+            $("#update-button-" + public_id).prop('disabled', true)
+        } else {
+            $("#update-button-" + public_id).prop('disabled', false)
+        }
+    }
+    */
+
+    function follow(id, level){
+    $.post("/api/follow-user", 
+        {"user_public_id": id, "priority_level": level},
+        function(result){
+            console.log(result);
+            results[id].following = level
+            update_button(id)
+        })
+    }
+
+    function follow_incomplete(id){
+        prio = $("#result-priority-level-" + id).val();
+        console.log ("prio " + prio)
+        follow(id, prio);
+    }
+
+    </script>
+
+    {% endif %}
 {% endblock %}

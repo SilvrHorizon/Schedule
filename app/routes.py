@@ -18,15 +18,14 @@ from PIL import Image
 import json
 
 from config import Config, get_google_provider_config
-from app import db
+from app import db, csrf
 from app.models import User, Schedule, Class, DayBinaryRepresentation
 from app import App
 from ScheduleImageProcessor import findCourses
 from customUtilities.time import hour_minute_to_minutes, format_minutes
 from customUtilities.schedulemanip import getBinaryRepresentation, getFreeTime, extract_breaks
 from customUtilities.math import common_spans
-
-from app.forms import UserSearchForm
+from app.forms import FollowUserForm
 
 # oAuth2 client setup
 oauthClient = WebApplicationClient(Config.GOOGLE_CLIENT_ID)
@@ -43,10 +42,11 @@ def sortFunction(e):
     except:
         return 100000
 
+
 @login_required
 @App.route('/upload-schedule', methods=['GET', 'POST'])
+@csrf.exempt
 def uploadSchedule():
-
     if request.method == 'POST':
         if request.files['image']:
             
@@ -219,6 +219,7 @@ def login_callback():
 @login_required
 @App.route('/my-schedule', methods=['GET'])
 def show_schedule():
+
     if not current_user.is_authenticated:
         return "Du är inte inloggad, inget personligt schema kan visas"
 
@@ -243,22 +244,63 @@ def show_schedule():
 
 @App.route('/search-for-user')
 def user_search():
-    print(request.args)
-    print(len(request.args))
+    form = FollowUserForm()
 
     # TODO perform validation
     if len(request.args) > 0:
-        # email=request.args["email"],
-        print(request.args["first_name"])
-        users = User.query.filter_by(first_name=request.args["first_name"])
-        b = "fuuuu"
-        print(users[0].__repr__())
+        email = request.args.get("email")
+        first_name = request.args.get("first_name")
+        last_name = request.args.get("last_name")
+        query = User.query
+        
+        print('Firstname', request.args.get('first_name'))
+        if email:
+            query = query.filter_by(email=email.lower()) 
+        if first_name:
+            query = query.filter(User.first_name.contains(first_name.lower()))
+        if last_name:
+            query = query.filter(User.last_name.contains(last_name.lower()))
+        users = query.all()
+        
+        follows = {}
         for u in users:
-            b += repr(u)
-            print(u, b)
+            follows[u.id] = current_user.following.filter_by(followed = u).first()
+            if follows[u.id] is not None: 
+                follows[u.id] = follows[u.id].priority_level
+            else:
+                follows[u.id] = 0
 
-        return b
+        for u in users:
+            print(u)
 
-    form = UserSearchForm()
+        
+        return render_template('search-for-user.html', form=form, results=users, follows=follows)
+        
     return render_template('search-for-user.html', form=form)
 
+@App.route('/api/follow-user', methods=["POST"])
+def follow_user():
+    user_public_id = request.form["user_public_id"]
+    priority_level = int(request.form["priority_level"])
+
+    
+    user = User.query.filter_by(public_id=user_public_id).first()
+    if user is None:
+        return jsonify({'status': 'No such user'})
+
+    if priority_level <= 0:
+        current_user.unfollow(user)
+        db.session.commit()
+        return jsonify({'status': 'success'})
+        
+    
+    if priority_level > 4:
+        priority_level = 4
+
+    current_user.follow(user, priority_level)
+    db.session.commit()
+
+    print(f'User: {user}')
+
+    print(f'User: {user_public_id}, prioritylevel: {priority_level}')
+    return jsonify({'status': 'success'})
