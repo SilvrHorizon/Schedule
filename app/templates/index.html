@@ -11,32 +11,19 @@
         <div class="container-fluid">
             <p> you are logged in as {{ current_user.email }}</p>
         </div>
+
+        <style>
+            .no-y {
+                padding-top: 0px !important;
+                padding-bottom: 0px !important;
+                margin-top: 0px !important;
+                margin-bottom: 0px !important;
+
+                vertical-align: middle !important;
+            }
+        </style>
         
-        <div id="common_times_table" class="container-fluid">
-            <!---
-            <table>
-                <tr>
-                    <th>Jonathan</th>
-                    <th>Axel</th>
-                    <th>Fabian</th>
-                </tr>
-                <tr>
-                    <td>10:30-11:00</td>
-                    <td>10:30-11:00</td>
-                    <td>10:30-11:00</td>
-                </tr>
-                <tr>
-                    <td>10:30-11:00</td>
-                    <td>10:30-11:00</td>
-                    <td>10:30-11:00</td>
-                </tr>
-                <tr>
-                    <td>10:30-11:00</td>
-                    <td>10:30-11:00</td>
-                    <td>10:30-11:00</td>
-                </tr>
-            </table>
-            -->
+        <div id="common_times_table" style="overflow-x: auto;">
         </div>
 
     {% else %}
@@ -47,5 +34,23 @@
 {% endblock %}
 
 {% block scripts%}
+    <script id="passed-data" type="text/javascript">
+        let loaded_schedules = {
+            {% if preloaded_schedules %}
+                {% for key, value in preloaded_schedules.items() %}
+                    "{{ key }}" : { 
+                        "first_name" : "{{value.first_name}}", 
+                        "last_name": "{{ value.last_name }}",
+                        "times": [
+                            {% for time in value.times %}
+                            [{{ time[0] }}, {{ time[1] }}],
+                            {% endfor %}
+                        ]
+                    
+                    },
+                {% endfor %}
+            {% endif %}
+        }
+    </script>
     <script type="text/javascript" src="{{ url_for('static', filename='javascript/index.js')}}"></script>
 {% endblock %}

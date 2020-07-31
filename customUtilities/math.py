@@ -5,8 +5,11 @@ def common_spans(span_list_0, span_list_1):
     index_1 = 0
 
     found = []
+    if len(span_list_0) <= 0 or len(span_list_1) <= 0:
+        return found
     
     while(True):
+
         lower_border = max(span_list_0[index_0][0], span_list_1[index_1][0])
         upper_border = min(span_list_0[index_0][1], span_list_1[index_1][1])
 

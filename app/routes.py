@@ -119,32 +119,34 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-@login_required
-@App.route('/api/friends-today')
-def api_friends_today():
-
-    other = User.query.get(1)
-    
-    #TODO what if one does not have a schedule that day and week?
-    #TODO make it so that it returns the correct weekday
-    other_schedule = other.schedules.filter_by(week_number=-1).first()
-    my_schedule = current_user.schedules.filter_by(week_number=-1).first()
-    
-    other_breaks = extract_breaks(other_schedule, 0)
-    my_breaks = extract_breaks(my_schedule, 0)
-
-
-    common = common_spans(my_breaks, other_breaks)
-
-    print('returning')
-    return jsonify([{"public_id": other.public_id, "first_name" : other.first_name, "last_name" : other.last_name, 
-        "common_free_time": common}]) 
- 
 @App.route('/index')
 @App.route('/')
 def index():
-    print(request.headers)
-    return render_template('index.html')
+    print('reached index')
+    if current_user.is_authenticated:
+        
+        
+        #TODO handle cases where there is no standard schedule uploaded
+        preloaded_schedules = {}
+        following = current_user.following.all()
+        my_classes = current_user.schedules.filter_by(week_number=-1).first().classes.filter_by(weekday=0).all()
+        my_breaks = extract_breaks(my_classes)
+
+        
+        for other in following:
+            followed = other.followed
+
+            #TODO handle cases where there is no standard schedule uploaded
+            followed_schedule = followed.schedules.filter_by(week_number=-1).first()
+            followed_classses = followed_schedule.classes.filter_by(weekday=0).all()
+            
+            preloaded_schedules[followed.public_id] = {"times": common_spans(extract_breaks(followed_classses), my_breaks), 
+                "first_name": followed.first_name, "last_name": followed.last_name}
+        
+        return render_template('index.html', preloaded_schedules = preloaded_schedules)
+    
+    return 'YOU ARE NOT LOGGED IN'
+    
 
 
 @App.route('/signup/callback')
@@ -218,8 +220,7 @@ def login_callback():
 
 @login_required
 @App.route('/my-schedule', methods=['GET'])
-def show_schedule():
-
+def my_schedule():
     if not current_user.is_authenticated:
         return "Du är inte inloggad, inget personligt schema kan visas"
 
@@ -244,7 +245,6 @@ def show_schedule():
 
 @App.route('/search-for-user')
 def user_search():
-    form = FollowUserForm()
 
     # TODO perform validation
     if len(request.args) > 0:
@@ -274,9 +274,9 @@ def user_search():
             print(u)
 
         
-        return render_template('search-for-user.html', form=form, results=users, follows=follows)
+        return render_template('search-for-user.html', results=users, follows=follows)
         
-    return render_template('search-for-user.html', form=form)
+    return render_template('search-for-user.html')
 
 @App.route('/api/follow-user', methods=["POST"])
 def follow_user():

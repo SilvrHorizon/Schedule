@@ -88,18 +88,23 @@ def getBinaryRepresentation(courses):
 
     return binary
 
+
 from app.models import Class, Schedule
-def extract_breaks(schedule, day):
-    print("query began")
-    classes = Class.query.filter_by(schedule_id = schedule.id, weekday=day).order_by(Class.begins).all()
-    
+def extract_breaks(classes):
     breaks = []
     for i in range(len(classes) - 1):
         breaks.append( [classes[i].ends, classes[i+1].begins] )
 
     return breaks
 
-             
+
+'''
+def extract_breaks(schedule, day):
+    classes = Class.query.filter_by(schedule_id = schedule.id, weekday=day).order_by(Class.begins).all()
+    
+    return extract_breaks(classes)
+    
+   '''          
 
 
         
