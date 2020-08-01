@@ -58,7 +58,7 @@
     }
     
     function createSelectRange(result_id, selected_option){
-        build = "<select onChange=\"follow_incomplete('" + result_id + "')\" class=\"col-xs-4\" id=\"" + ("result-priority-level-" + result_id) + "\">";
+        build = "<select style=\"background: #151E3F\" onChange=\"follow_incomplete('" + result_id + "')\" class=\"col-xs-4\" id=\"" + ("result-priority-level-" + result_id) + "\">";
         build += "<option value=\"0\" "
         if(selected_option == 0){
             build += "selected" 
@@ -75,17 +75,6 @@
         build += "</select>";
         return build
     }
-    /*
-    function update_button(public_id){
-        console.log($('#result-priority-level-' + public_id).val())
-        console.log(results[public_id].following)
-        if(results[public_id].following == $('#result-priority-level-' + public_id).val()){
-            $("#update-button-" + public_id).prop('disabled', true)
-        } else {
-            $("#update-button-" + public_id).prop('disabled', false)
-        }
-    }
-    */
 
     function follow(id, level){
     $.post("/api/follow-user", 
@@ -93,7 +82,6 @@
         function(result){
             console.log(result);
             results[id].following = level
-            update_button(id)
         })
     }
 
