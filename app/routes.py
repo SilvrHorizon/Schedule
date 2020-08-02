@@ -119,6 +119,11 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
+@App.route('/test')
+def test():
+    login_user(User.query.get(1))
+    return url_for('index')
+
 @App.route('/index')
 @App.route('/')
 def index():
