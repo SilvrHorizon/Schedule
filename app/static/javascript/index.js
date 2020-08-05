@@ -19,8 +19,8 @@ function formatMinutes(minutes){
 
 class scheduleTable{
     constructor(id, classes = "", header_size=30){
-        this.render_start = hourMinuteToMinutes([8, 20])
-        this.render_end = hourMinuteToMinutes([18, 0])
+        this.render_start = hourMinuteToMinutes([8,  0])
+        this.render_end = hourMinuteToMinutes([22, 0])
         this.id = id;
         this.header_size = header_size
         this.columns = []
@@ -29,7 +29,8 @@ class scheduleTable{
         this.break_points.push(this.render_start)
         this.break_points.push(this.render_end)
         this.opening_tag = ["<table id=\"", id, "\"class=\" py-0 my-0 ", classes, "\" style=\"border: 2px dotted #FFFFFF; width: 100%;\">"];
-        
+        this.column_ids = {}
+
         this.time_column_data = {"data": [], "header": null}
         this.use_time_column = false
         this.time_column_horizontal_lines = true
@@ -55,11 +56,6 @@ class scheduleTable{
 
         let render_length = this.render_end - this.render_start;
         this.time_column_data["header"] = this.build_header("Tider")
-        /*
-        console.log(render_length)
-        console.log("intervals: " + intervals)
-        console.log(Math.floor(render_length / intervals))
-        */
 
         this.time_column_break_points = []
         for(let i = 0; i < Math.floor(render_length / intervals); i++){
@@ -72,7 +68,7 @@ class scheduleTable{
                     [begin, end], 
                     "gray", 
                     (formatMinutes(begin) + "-" + formatMinutes(end)),
-                    "12em"
+                    "6em"
                 )
             )
             this.time_column_break_points.push(end)
@@ -85,25 +81,61 @@ class scheduleTable{
                 [intervals * (Math.floor(render_length / intervals)) + this.render_start , this.render_end],
                 "gray",
                 "",
-                "12em"
+                "6em"
             )
         )
 
         console.log(this.time_column_data)
         
     }
+    
+    remove_by_id(id){
+        for(let i = this.column_ids[id] + 1; i < this.columns.length; i++){
+            this.column_ids[column[i].id]--;
+        }
+        delete this.column_ids[id]
+    }
 
+    push_column(column){
+        this.add_column(this.columns.length, column)
+    }
     
     add_column(at_index, column){
+        console.log(column)
+
         if(column.data.length > 0){
-            for(let i in column.data){
+            for(let i = column.data.length -1; i >= 0; i--){
+                if(column.data[i].span[1] <= this.render_start){
+                    column.data.splice(i, 1);
+                    continue;
+                }
+
+                if(column.data[i].span[0] >= this.render_end){
+                    column.data.splice(i,1)
+                    continue;
+                }
+
+                if(column.data[i].span[0] < this.render_start){
+                    column.data[i].span[0] = this.render_start;
+                }
+
+                if(column.data[i].span[1] > this.render_end){
+                    column.data[i].span[1] = this.render_end;
+                }
+
                 for(let time in column.data[i].span){
                     time = column.data[i].span[time]
                     
                     this.add_break_point(time)
                 }
             }
-            this.columns.push(column)
+
+            this.columns.splice(at_index,0, column)
+
+            this.column_ids[column.id] = at_index;
+            for(let i = at_index + 1; i < this.columns.length; i++){
+                this.column_ids[this.columns[i].id]++;
+            }
         }
     }
 
@@ -158,17 +190,11 @@ class scheduleTable{
                 let data = this.columns[i].data[j]
 
                 if(data.text){
-                    console.log("Skipping: " + data.text)
                     continue;
                 }
-                
-                /*
-                console.log("processing: ")
-                console.log(data.span)
-                */
 
                 while(keeper[0] <= data.span[0]){
-                    console.log(keeper.shift())
+                    keeper.shift()
                 }
 
                 if(data.span[1] > keeper[0]){
@@ -211,11 +237,6 @@ class scheduleTable{
 
 
         console.log("break_points: " + this.break_points)
-        for(let i in this.columns){
-            console.log("Data: ")
-            console.log(this.columns[i])
-        }
-
 
         build.push(this.get_tr(this.header_size))
         for(let i in this.columns){
@@ -236,7 +257,7 @@ class scheduleTable{
                         if(td_data.text == "" && this.time_column_horizontal_lines){
                             extra_styles += "border-bottom: 1px solid white"
                         }
-                        row.push(this.get_td(this.break_points.indexOf(td_data.span[1]) - i, td_data.bg_color, width=td_data.width, extra_styles=extra_styles))
+                        row.push(this.get_td(this.break_points.indexOf(td_data.span[1]) - i, td_data.bg_color, td_data.width, extra_styles=extra_styles))
                         
 
                         row.push(td_data.text)
@@ -269,6 +290,34 @@ class scheduleTable{
         }
     }
 
+    fill_holes(column, fill_color, fill_text, width=""){
+        console.log(column.id)
+        let data = column.data
+        if(data.length == 0){
+            data[0] = this.build_data([this.render_start, this.render_end], fill_color, fill_text, width=width);
+            return column;
+            //return //[this.build_data([this.render_start, this.render_end], fill_color, fill_text, width=width)]
+        }
+
+        if(data[0].span[0] > this.render_start){
+            data.splice(0,0, this.build_data([this.render_start, data[0].span[0]], fill_color, fill_text, width))
+        }
+
+        let prev_end = data[0].span[1]
+        for(let i = 1; i < data.length; i++){
+            if(data[i].span[0] > prev_end){
+                data.splice(i, 0, this.build_data([prev_end, data[i].span[0]], fill_color, fill_text, width));
+                i++;
+            }
+            prev_end = data[i].span[1]
+        }
+
+        if(data[data.length -1].span[1] < this.render_end){
+            data.splice(data.length, 0, this.build_data([data[data.length -1].span[1], this.render_end], fill_color, fill_text, width));
+        }
+        return column;
+    }
+
     build_data(span, bg_color="gray", text = "", width=""){
         return (
             {
@@ -281,93 +330,51 @@ class scheduleTable{
     }
 }
 
-let schedule_table = new scheduleTable("primary-table", "table-dark");
-//schedule_table.add_column(0, test_data3)
-//schedule_table.add_column(0, test_data)
-//schedule_table.add_column(0, test_data2)
 
+
+let schedule_table = new scheduleTable("primary-table", "table-dark");
 
 $( document ).ready(function () {
     let occupied_color = "#151E3F"
     let free_color = "#5DA9E9"     
 
     let render_length = schedule_table.render_end - schedule_table.render_start
-    
-    /*
-    {
-        let interval = 20;
-        let processed = {"header": schedule_table.build_header("Tider"), "data": []}
-        for(let i = 0; i < Math.floor(render_length / interval); i++){
-            processed["data"].push(schedule_table.build_data(
-                [
-                    schedule_table.render_start + i * interval, 
-                    schedule_table.render_start + (i+1) * interval,
-                ],
-                occupied_color,
-                (
-                    formatMinutes(schedule_table.render_start + i * interval) + "-" + formatMinutes(schedule_table.render_start + (i+1) * interval)
-                ),
-                width="6em"
-            ))
-        }
-        schedule_table.add_column(0, processed)
-    }*/
 
     schedule_table.time_column()
 
     
 
     for(let i in loaded_schedules){
-        if(loaded_schedules[i].times.length <= 0){
-            continue;
-        }
 
         let times_len = loaded_schedules[i].times.length;
-
-        let processed = {"header": null, "data": []}
-
+        let processed = {"header": null, "data": [], "id": null}
         processed["header"] = schedule_table.build_header(loaded_schedules[i].first_name + "<br />" + loaded_schedules[i].last_name)
-        if(loaded_schedules[i].times[0][0] != schedule_table.render_start){
-            processed["data"].push(schedule_table.build_data([schedule_table.render_start, loaded_schedules[i].times[0][0]], occupied_color, text="", width="auto"))
-        }
+        
+        for(let span = 0; span < times_len; span++){
+            let color = free_color;
+            
+            if(loaded_schedules[i].times[span][1] <= loaded_schedules[i].begins){
+                color = "yellow"
+            }
 
-        for(let span = 0; span < times_len - 1; span++){
-            console.log("looping")
+            if(loaded_schedules[i].times[span][0] >= loaded_schedules[i].ends){
+                color = "orange"
+            }
+
             processed["data"].push(
                 schedule_table.build_data(
                     [loaded_schedules[i].times[span][0], loaded_schedules[i].times[span][1]],
-                    free_color,
+                    color,
                     (formatMinutes(loaded_schedules[i].times[span][0]) + "-" + formatMinutes(loaded_schedules[i].times[span][1])),
                     width="auto"
                 )
             )
 
-            processed["data"].push(
-                schedule_table.build_data(
-                    [loaded_schedules[i].times[span][1], loaded_schedules[i].times[span + 1][0]],
-                    occupied_color,
-                    text="",
-                    width="auto"
-                )
-            )
-
         }
 
-        processed["data"].push(
-            schedule_table.build_data(
-                [loaded_schedules[i].times[times_len - 1][0], loaded_schedules[i].times[times_len - 1][1]],
-                free_color,
-                ((formatMinutes(loaded_schedules[i].times[times_len - 1][0]) + "-" + formatMinutes(loaded_schedules[i].times[times_len -1][1]))),
-                text="",
-                width="auto"
-                
-            )
-        )
-        if(loaded_schedules[i].times[times_len-1][1] < schedule_table.render_end){
-            processed["data"].push(schedule_table.build_data([loaded_schedules[i].times[times_len-1][1], schedule_table.render_end], occupied_color, "", width="auto"))
-        }
-
-        schedule_table.add_column(0, processed)
+        processed["id"] = i
+        schedule_table.fill_holes(processed, occupied_color, "", "auto")
+        schedule_table.push_column(processed)
     }
 
     //console.log(schedule_table.get_html())

@@ -23,7 +23,7 @@ from app.models import User, Schedule, Class, DayBinaryRepresentation
 from app import App
 from ScheduleImageProcessor import findCourses
 from customUtilities.time import hour_minute_to_minutes, format_minutes
-from customUtilities.schedulemanip import getBinaryRepresentation, getFreeTime, extract_breaks
+from customUtilities.schedulemanip import getBinaryRepresentation, getFreeTime, extract_breaks, extract_free_time, extract_begins, extract_ends
 from customUtilities.math import common_spans
 from app.forms import FollowUserForm
 
@@ -53,7 +53,7 @@ def uploadSchedule():
             # Get courses
             img = Image.open(request.files['image'].stream).convert('RGB')
             opencvimg = np.array(img)
-            courses = findCourses(cv2.cvtColor(opencvimg, cv2.COLOR_BGR2GRAY), debug=False)
+            courses = findCourses(cv2.cvtColor(opencvimg, cv2.COLOR_BGR2GRAY), debug=True)
             courses.sort(key=sortFunction)
 
             schedule = None
@@ -133,22 +133,28 @@ def index():
         
         #TODO handle cases where there is no standard schedule uploaded
         preloaded_schedules = {}
+        followed_users = {}
         following = current_user.following.all()
         my_classes = current_user.schedules.filter_by(week_number=-1).first().classes.filter_by(weekday=0).all()
-        my_breaks = extract_breaks(my_classes)
-
+        my_breaks = extract_free_time(my_classes)
         
-        for other in following:
-            followed = other.followed
+        print(my_breaks)
+        for follow in following:
+            followed = follow.followed
 
-            #TODO handle cases where there is no standard schedule uploaded
-            followed_schedule = followed.schedules.filter_by(week_number=-1).first()
-            followed_classses = followed_schedule.classes.filter_by(weekday=0).all()
+            if(follow.priority_level >= 2):
+                #TODO handle cases where there is no standard schedule uploaded
+                followed_schedule = followed.schedules.filter_by(week_number=-1).first()
+                followed_classses = followed_schedule.classes.filter_by(weekday=0).all()
+                
+                print(extract_free_time(followed_classses))
+                preloaded_schedules[followed.public_id] = {"times": common_spans(extract_free_time(followed_classses), my_breaks), 
+                "first_name": followed.first_name, "last_name": followed.last_name, "begins": extract_begins(followed_classses),"ends": extract_ends(followed_classses)}
+                
+            followed_users[followed.public_id] = {"level": follow.priority_level, "first_name": followed.first_name, "last_name": followed.last_name}
             
-            preloaded_schedules[followed.public_id] = {"times": common_spans(extract_breaks(followed_classses), my_breaks), 
-                "first_name": followed.first_name, "last_name": followed.last_name}
-        
-        return render_template('index.html', preloaded_schedules = preloaded_schedules)
+
+        return render_template('index.html', preloaded_schedules = preloaded_schedules, followed_users=followed_users)
     
     return 'YOU ARE NOT LOGGED IN'
     
@@ -203,7 +209,6 @@ def login_callback():
     token_endpoint = google_config["token_endpoint"]
 
     token_url, headers, body = oauthClient.prepare_token_request(token_endpoint, authorization_response=request.url, redirect_url=request.base_url, code=code)
-
     token_response = requests.post(token_url, headers=headers, data=body, auth=(Config.GOOGLE_CLIENT_ID, Config.GOOGLE_CLIENT_SECRET))
 
     oauthClient.parse_request_body_response(json.dumps(token_response.json()))
@@ -283,6 +288,37 @@ def user_search():
         
     return render_template('search-for-user.html')
 
+@login_required
+@App.route('/api/get-common-times', methods=["POST"])
+def get_common_times():
+    print(request)
+    public_id = request.form["user_public_id"]
+    week =  request.form["week"]
+    day = request.form["day"]
+
+    followed = User.query.filter_by(public_id=public_id).first()
+    
+
+    if followed is None:
+        return jsonify({"status": "User not found"})
+
+    followed_schedule = followed.schedules.filter_by(week_number=week).first()
+    if followed_schedule is None:
+        followed_schedule = followed.schedules.filter_by(week_number=-1).first()
+
+    followed_courses = followed_schedule.classes.filter_by(weekday=day).all()
+    
+    my_schedule = current_user.schedules.filter_by(week_number=week).first()
+    if my_schedule is None:
+        my_schedule = current_user.schedules.filter_by(week_number=-1).first()
+    
+    my_courses = my_schedule.classes.filter_by(weekday=day).all()
+
+    followed_breaks = extract_breaks(followed_courses)
+    my_breaks = extract_breaks(my_courses)
+
+    return jsonify({"status": "success", "result": common_spans(my_breaks, followed_breaks)})
+    
 @App.route('/api/follow-user', methods=["POST"])
 def follow_user():
     user_public_id = request.form["user_public_id"]

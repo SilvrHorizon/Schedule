@@ -14,18 +14,7 @@
 
 {% block scripts %}
     {% if results%}
-    <script type="text/javascript">
-
-    
-    let csrfToken = "{{ csrf_token() }}";
-    $.ajaxSetup({
-        beforeSend: function(xhr, settings){
-            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
-                xhr.setRequestHeader("X-CSRFToken", csrfToken);
-            }
-        }
-    })
-     
+    <script type="text/javascript">     
 
     let results = {
         {% for result in results %}

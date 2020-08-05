@@ -2,8 +2,11 @@ import math
 
 from ScheduleImageProcessor import course
 
+from customUtilities.math import common_spans
 from customUtilities.time import hour_minute_to_minutes
 from customUtilities.bitmanip import countBits
+
+
 
 TRACK_BEGINS = int(hour_minute_to_minutes([8, 00]))
 TRACK_ENDS = int(hour_minute_to_minutes([17, 30]))
@@ -89,7 +92,6 @@ def getBinaryRepresentation(courses):
     return binary
 
 
-from app.models import Class, Schedule
 def extract_breaks(classes):
     breaks = []
     for i in range(len(classes) - 1):
@@ -97,17 +99,27 @@ def extract_breaks(classes):
 
     return breaks
 
-
-'''
-def extract_breaks(schedule, day):
-    classes = Class.query.filter_by(schedule_id = schedule.id, weekday=day).order_by(Class.begins).all()
+def extract_free_time(classes):
+    free = extract_breaks(classes)
+    if(len(classes) == 0):
+        return [[0, hour_minute_to_minutes([24,0])]]
     
-    return extract_breaks(classes)
+    free.insert(0, [0, classes[0].begins])
+    free.append([classes[-1].ends, hour_minute_to_minutes([24,0])])
+    return free 
+
+def extract_begins(classes):
+    if len(classes) < 1:
+        return -1  
     
-   '''          
+    return classes[0].begins
+    
 
-
-        
+def extract_ends(classes):
+    if len(classes) < 1:
+        return -1
+    
+    return classes[-1].ends
 
         
 

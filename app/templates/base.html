@@ -21,6 +21,30 @@
 
         <!-- Latest compiled JavaScript -->
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+        
+        <script type="text/javascript">
+            var csrf_token = "{{ csrf_token() }}";
+        
+            $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                        xhr.setRequestHeader("X-CSRFToken", csrf_token);
+                    }
+                }
+            });
+        </script>
+
         {% block scripts %}{% endblock %}
+
+        <footer class="page-footer font-small special-color-dark" style="background: darkslategrey;">
+            <div class="container-fluid text-center text-md-left">
+                <div class="row">
+                    <div class="col-xs-12">
+                        <h1>Hello world</h1>
+                    </div>
+
+                </div>
+            </div>
+        </footer>
     </body>
 </html>

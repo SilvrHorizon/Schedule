@@ -18,14 +18,22 @@
                 padding-bottom: 0px !important;
                 margin-top: 0px !important;
                 margin-bottom: 0px !important;
-
                 vertical-align: middle !important;
             }
         </style>
         
-        <div id="common_times_table" style="overflow-x: auto; width: auto;">
+        <div id="common_times_table" style="overflow-x: auto; width: auto; margin-bottom: 10px">
         </div>
 
+        {% if followed_users %}
+            <div class="container">
+                <div class="row">
+                    {% for key, value in followed_users.items() %}
+                        <button type="button", class="btn btn-primary col-xs-6">{{value.first_name}} {{value.last_name}}</button>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
     {% else %}
         <h1>Login</h1>
         <a href={{ google_auth_url }}>Login</a>
@@ -45,12 +53,23 @@
                             {% for time in value.times %}
                             [{{ time[0] }}, {{ time[1] }}],
                             {% endfor %}
-                        ]
-                    
+                        ],
+                        "begins": {{ value.begins }},
+                        "ends" : {{ value.ends }}                    
                     },
                 {% endfor %}
             {% endif %}
         }
+
+        let loaded_users = {
+            {% if followed_users%}
+                {% for key, value in followed_users.items() %}
+                "{{ key }}": {
+                    "level": "{{ value.level}}"
+                }, 
+                {% endfor %}
+            {% endif %}
+        } 
     </script>
     <script type="text/javascript" src="{{ url_for('static', filename='javascript/index.js')}}"></script>
 {% endblock %}
