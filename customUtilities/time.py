@@ -1,3 +1,5 @@
+from datetime import date
+
 def hour_minute_to_minutes(hourMinute):
     return hourMinute[0] * 60 + hourMinute[1]
 
@@ -14,3 +16,7 @@ def format_hour_minute(hourMinute):
 
 def format_minutes(minutes):
     return format_hour_minute(minutes_to_hour_minute(minutes))
+
+
+def current_week():
+    return date.today().isocalendar()[1]

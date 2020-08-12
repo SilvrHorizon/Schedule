@@ -22,7 +22,7 @@ from app import db, csrf
 from app.models import User, Schedule, Class, DayBinaryRepresentation
 from app import App
 from ScheduleImageProcessor import findCourses
-from customUtilities.time import hour_minute_to_minutes, format_minutes
+from customUtilities.time import hour_minute_to_minutes, format_minutes, current_week
 from customUtilities.schedulemanip import getBinaryRepresentation, getFreeTime, extract_breaks, extract_free_time, extract_begins, extract_ends
 from customUtilities.math import common_spans
 from app.forms import FollowUserForm
@@ -253,9 +253,31 @@ def my_schedule():
     return render_template('my-schedule.html', classes=schedule.classes.all())
 
 
-@App.route('/search-for-user')
-def user_search():
+@App.route('/user/<user_public_id>')
+def user(user_public_id):
+    user = User.query.filter_by(public_id=user_public_id).first()
+    if user is None:
+        return abort(404)
 
+    common_times = None
+    user_schedule = user.get_schedule(current_week())
+    if current_user.is_authenticated:
+        common_times = []
+        
+        my_schedule = current_user.get_schedule(current_week())
+        for i in range(0,5):
+            user_classes = user_schedule.classes.filter_by(weekday=i).all()
+            common_times.append({
+                "begins": extract_begins(user_classes),
+                "ends": extract_ends(user_classes),
+                "times": common_spans(extract_free_time(my_schedule.classes.filter_by(weekday=i).all()), extract_free_time(user_classes))
+            })
+
+    return render_template('user.html', user=user, current_week=current_week(), user_schedule=user_schedule, common_times=common_times)
+
+@App.route('/search-for-user')
+@App.route('/search-for-user/page/<int:page>')
+def user_search(page=1):
     # TODO perform validation
     if len(request.args) > 0:
         email = request.args.get("email")
@@ -270,21 +292,23 @@ def user_search():
             query = query.filter(User.first_name.contains(first_name.lower()))
         if last_name:
             query = query.filter(User.last_name.contains(last_name.lower()))
-        users = query.all()
+        
+        paged = query.paginate(page, 1, False)
+        users = paged.items                                                           
         
         follows = {}
-        for u in users:
-            follows[u.id] = current_user.following.filter_by(followed = u).first()
-            if follows[u.id] is not None: 
-                follows[u.id] = follows[u.id].priority_level
-            else:
-                follows[u.id] = 0
+        if current_user.is_authenticated:
+            for u in users:
+                follows[u.id] = current_user.following.filter_by(followed = u).first()
 
-        for u in users:
-            print(u)
-
+                if follows[u.id] is not None: 
+                    follows[u.id] = follows[u.id].priority_level
+                else:
+                    follows[u.id] = 0
         
-        return render_template('search-for-user.html', results=users, follows=follows)
+        search = '?first_name=' + request.args['first_name'] + '&last_name=' + request.args['last_name'] + '&email=' + request.args['email']
+
+        return render_template('search-for-user.html', results=users, follows=follows, pages=paged.iter_pages(), search_query=search, selected_page=page)
         
     return render_template('search-for-user.html')
 
@@ -294,36 +318,64 @@ def get_common_times():
     print(request)
     public_id = request.form["user_public_id"]
     week =  request.form["week"]
-    day = request.form["day"]
+    day = request.form.get("day")
+    # if day = -1 return entire week
 
     followed = User.query.filter_by(public_id=public_id).first()
-    
 
     if followed is None:
         return jsonify({"status": "User not found"})
 
-    followed_schedule = followed.schedules.filter_by(week_number=week).first()
-    if followed_schedule is None:
-        followed_schedule = followed.schedules.filter_by(week_number=-1).first()
+    followed_schedule = followed.get_schedule(week)
+    my_schedule = current_user.get_schedule(week)
 
-    followed_courses = followed_schedule.classes.filter_by(weekday=day).all()
+
     
-    my_schedule = current_user.schedules.filter_by(week_number=week).first()
-    if my_schedule is None:
-        my_schedule = current_user.schedules.filter_by(week_number=-1).first()
-    
-    my_courses = my_schedule.classes.filter_by(weekday=day).all()
 
-    followed_breaks = extract_breaks(followed_courses)
-    my_breaks = extract_breaks(my_courses)
+    times = None 
+    begins = None
+    ends = None
 
-    return jsonify({"status": "success", "result": common_spans(my_breaks, followed_breaks)})
+    if day is not None:
+        followed_courses = followed_schedule.classes.filter_by(weekday=day).all()
+        my_courses = my_schedule.classes.filter_by(weekday=day).all()
+
+        followed_breaks = extract_free_time(followed_courses)
+        my_breaks = extract_free_time(my_courses)
+
+        times = common_spans(my_breaks, followed_breaks)
+        begins = extract_begins(followed_courses)
+        ends = extract_ends(followed_courses)
+    else:
+        times = []
+        begins = []
+        ends = []
+
+        for i in range(5):
+            followed_courses = followed_schedule.classes.filter_by(weekday=i).all()
+            my_courses = my_schedule.classes.filter_by(weekday=i).all()
+
+            followed_breaks = extract_free_time(followed_courses)
+            my_breaks = extract_free_time(my_courses)
+
+            times.append(common_spans(my_breaks, followed_breaks))
+            begins.append(extract_begins(followed_courses))
+            ends.append(extract_ends(followed_courses))
+   
+    result = {
+        'times': times,
+        'first_name': followed.first_name, 
+        'last_name': followed.last_name,
+        'begins': begins,
+        'ends': ends
+    } 
+
+    return jsonify({"status": "success", "result": result})
     
 @App.route('/api/follow-user', methods=["POST"])
 def follow_user():
     user_public_id = request.form["user_public_id"]
     priority_level = int(request.form["priority_level"])
-
     
     user = User.query.filter_by(public_id=user_public_id).first()
     if user is None:

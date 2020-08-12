@@ -44,6 +44,11 @@ class User(UserMixin, db.Model):
 
     schedules = db.relationship('Schedule', backref="user", lazy='dynamic')
 
+    def get_schedule(self, week_number):
+        schedule = self.schedules.filter_by(week_number=week_number).first()
+        if schedule is None: 
+            schedule = self.schedules.filter_by(week_number=-1).first()
+        return schedule
     
     def follow(self, user, level):
         rel = Follow.query.filter_by(follower_id=self.id, followed_id=user.id)

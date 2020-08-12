@@ -1,0 +1,74 @@
+{% extends "base.html "%}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <h1 class="text-center col-xs-12">{{user.first_name}} <small>{{user.last_name}}</small></h1>
+        </div>
+
+        <div class="row">
+            <select class="col-xs-12 input">
+                {% for i in range(1, 53) %}
+                    <option {% if current_week == i%}selected {% endif %}>{{i}}</option>
+                {% endfor %}
+            </select>
+        </div>    
+    </div>
+
+    <div id="user-schedule-div" style="overflow-y: hidden; overflow-x: auto; width: auto; margin-bottom: 10px">
+    </div>
+
+    <div id="common-times-div" style="overflow-y: hidden; overflow-x: auto; width: auto; margin-bottom: 10px">
+        <h1>hello</h1>
+    </div>
+    
+{% endblock %}
+
+{% block scripts %}
+
+    <script src="{{ url_for('static', filename='javascript/utilities.js') }}"></script>
+    <script id="passed_data">
+        let current_week = {{ current_week }}
+        let user_schedules = {
+            {% if user_schedule %}
+                {{ current_week }}: [
+                {% for i in range(5) %}
+                    [
+                        {% with day = user_schedule.classes.filter_by(weekday=i ).all() %}
+                            {% for class in day %}
+                                {
+                                    "course" : "{{class.course}}",
+                                    "span": [{{ class.begins }}, {{ class.ends}}]
+                                }, 
+
+                            {% endfor %}
+                        {% endwith %}
+                    ],
+                {% endfor %}
+                ], 
+            {% endif %}
+        }
+
+        let common_times = {
+            {% if current_user.is_authenticated %}
+                {{ current_week }}:
+                [
+                    {% for day in common_times %}
+                        {
+                            "ends": {{ day.ends }},
+                            "begins": {{ day.begins }},
+                            "times": [
+                                {% for i in day.times %}
+                                [{{i[0]}}, {{i[1]}}],
+                                {% endfor %}
+                            ]
+                        },
+                    {% endfor %}
+                ],  
+            {% endif %}
+        }
+
+    </script>
+    <script src="{{ url_for('static', filename='javascript/scheduleTable.js') }}"></script>
+    <script src="{{ url_for('static', filename='javascript/user.js')}}"></script>
+{% endblock %}

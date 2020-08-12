@@ -22,14 +22,14 @@
             }
         </style>
         
-        <div id="common_times_table" style="overflow-x: auto; width: auto; margin-bottom: 10px">
+        <div id="common_times_div" style="overflow-y: hidden; overflow-x: auto; width: auto; margin-bottom: 10px">
         </div>
-
+        <button class="btn" onclick="deselect_all()">Avmarkera alla</button>
         {% if followed_users %}
             <div class="container">
                 <div class="row">
                     {% for key, value in followed_users.items() %}
-                        <button type="button", class="btn btn-primary col-xs-6">{{value.first_name}} {{value.last_name}}</button>
+                        <button id="schedule-button-{{key}}" type="button" onclick="toggle_user('{{key}}');" class="btn btn-warning col-xs-6">{{value.first_name}} {{value.last_name}}</button>
                     {% endfor %}
                 </div>
             </div>
@@ -71,5 +71,7 @@
             {% endif %}
         } 
     </script>
+    <script type="text/javascript" src="{{ url_for('static', filename='javascript/utilities.js')}}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='javascript/scheduleTable.js')}}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='javascript/index.js')}}"></script>
 {% endblock %}

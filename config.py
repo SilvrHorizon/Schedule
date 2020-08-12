@@ -4,9 +4,6 @@ import json
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-
-
-
 class Config(object):
     SECRET_KEY = "temporary-key"
 
@@ -17,6 +14,8 @@ class Config(object):
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
     GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
     GOOGLE_DISCOVERY_URL = 'https://accounts.google.com/.well-known/openid-configuration'
+
+
 
 def get_google_provider_config():
     return requests.get(Config.GOOGLE_DISCOVERY_URL).json()

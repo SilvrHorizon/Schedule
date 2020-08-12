@@ -1,18 +1,76 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <form method="GET">
-        <input type="search" name="first_name", placeholder="First name">
-        <input type="search" name="email", placeholder="Email">
-        <input type="search" name="last_name", placeholder="Last name">
+    <form method="GET" action="{{ url_for('user_search')}}">
+        <input type="search" name="first_name", placeholder="First name" class="input">
+        <input type="search" name="last_name", placeholder="Last name" class="input">
+        <input type="search" name="email", placeholder="Email" class="input">
 
-        <input type="submit" value="Sök">
+        <input type="submit" value="Sök" class="input">
     </form>
 
-    <div id="result-display-block" class="container"></div>
+    <div id="result-display-block" class="container">
+        {% if results %}
+            {% for result in results %}
+                {% if current_user.is_authenticated %}
+                    <div class="row" id="{{ result.public_id }}">
+                        <a href="{{ url_for('user', user_public_id=result.public_id)}}"><h1 class="col-xs-8">{{ capitalize_words(result.first_name) }} <small> {{ capitalize_words(result.last_name) }}</small></h1></a>
+                        
+                        <div class="col-xs-4">
+                            <div class="row">
+                                
+                                <button id="follow-{{result.public_id}}" onclick="follow('{{result.public_id}}')"
+                                {% if follows[result.id] != 0 %}
+                                    style="display: none;"
+                                {% endif %}
+                                    class="btn btn-info col-xs-12">Följ
+                                </button>
+
+                                <button id="unfollow-{{result.public_id}}" onclick="unfollow('{{ result.public_id }}')"
+                                    {% if follows[result.id] == 0 %}
+                                        style="display: none;"
+                                    {% endif %}
+                                    class="btn btn-primary col-xs-12">Avfölj
+                                </button>
+                                
+                                <button id="unstar-{{ result.public_id }}" onclick="unstar('{{ result.public_id }}')"{% if follows[result.id] != 2 %} style="display: none;"{% endif %} class="btn btn-primary col-xs-12">Av stjärnmärk</button>
+                                <button id="star-{{ result.public_id }}" onclick="star('{{result.public_id }}')" {% if follows[result.id] == 2 %} style="display: none;"{% endif%} class="btn btn-info col-xs-12">Stjärnmärk</button>
+                            </div>
+                        </div>
+                    {% else %}
+                    <div class="row" id="{{ result.public_id }}">
+                        <a href="{{ url_for('user', user_public_id=result.public_id)}}"><h1 class="col-xs-12">{{ capitalize_words(result.first_name) }} <small> {{ capitalize_words(result.last_name) }}</small></h1></a>
+                    </div>    
+                    {% endif %}
+                </div> 
+                <hr> 
+            {% endfor %}
+            
+            <ul class="pagination">
+                {% for page_num in pages %}
+                    {% if page_num %}
+                        {% if page_num == selected_page %}
+                            <li class="page-item disabled"><a href="#">{{page_num}}</a></li>
+                        {% else %}
+                            <li class="page-item"><a href="{{ url_for('user_search', page=page_num) }}{{ search_query}}">{{page_num}}</a></li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled"><a href="#">...</a></li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        {% else %}
+        <h1 style="text-align: center;">Inga resultat hittades</h1>
+        {% endif %}
+    </div> 
+
 {% endblock %}
 
 {% block scripts %}
+    <script type="text/javascript" src={{ url_for('static', filename='javascript/search-for-user.js') }}>
+    </script>
+
+<!---
     {% if results%}
     <script type="text/javascript">     
 
@@ -47,7 +105,7 @@
     }
     
     function createSelectRange(result_id, selected_option){
-        build = "<select style=\"background: #151E3F\" onChange=\"follow_incomplete('" + result_id + "')\" class=\"col-xs-4\" id=\"" + ("result-priority-level-" + result_id) + "\">";
+        build = "<select class='input' onChange=\"follow_incomplete('" + result_id + "')\" class=\"col-xs-4\" id=\"" + ("result-priority-level-" + result_id) + "\">";
         build += "<option value=\"0\" "
         if(selected_option == 0){
             build += "selected" 
@@ -81,6 +139,8 @@
     }
 
     </script>
-
+    
     {% endif %}
+    -->
+
 {% endblock %}
