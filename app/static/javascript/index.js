@@ -51,9 +51,9 @@ function toggle_user(id){
 $( document ).ready(function () {
 
     for(let i in loaded_users){
+        //Check if if the loaded user has a loaded schedule
         if(loaded_schedules[i] != null){
             loaded_users[i]["shown"] = true;
-            console.log(i)
             $("#schedule-button-" + i).removeClass('btn-warning').addClass('btn-primary')
         } else {
             loaded_users[i]["shown"] = false;

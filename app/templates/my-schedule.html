@@ -2,15 +2,39 @@
 
 {% block content %}
 <div class="container-fluid">
-    <form method="GET">
-        <input type="number", name="week_number", min="-1", max="52">
-        <input type="submit", value="Visa schema">
+    <form class="form">
+        <div class="form-group">
+            <label for="visa-vecka">Vecka: </label>
+            <select name="visa-vecka" onchange="show_week(this.value)" id="week-select" class="form-control input">
+                <option value="-1">Standard schema</option>
+                {% for i in range(1,53) %}
+                    <option>{{i}}</option>
+                {% endfor %}
+            </select>
+        </div>
     </form>
-
-    {% if classes %}
-        {% for class in classes %}
-            <p>{{ class.course }} på {{ class.weekday}} från {{ format_minutes(class.begins) }} till {{ format_minutes(class.ends) }}</p>
-        {% endfor %}
-    {% endif %}
 </div>
+
+<div id="schedule-table-div">
+</div>
+
+<div class="container">
+    <div class="row">
+        <form class="form" action="{{url_for('uploadSchedule')}}" method="GET">
+            <input type="number" name="week" value="-1" id="form-redirect-value" hidden>
+            <input type="submit" class="form-control" value="Ändra visad veckas schema">
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='javascript/utilities.js')}}"></script>
+    <script type="text/javascript" id="passed_data">
+        let user_public_id = "{{current_user.public_id}}";
+        let selected_week = {{ selected_week }};
+    </script>
+    <script type="text/javascript" src="{{ url_for('static', filename='javascript/scheduleTable.js')}}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='javascript/my-schedule.js')}}"></script>
 {% endblock %}

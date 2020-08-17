@@ -131,6 +131,7 @@ class scheduleTable{
             build.push("; width: ")
             build.push(width)
         }
+
         build.push("; ")
         build.push(extra_styles)
         build.push("\"")
@@ -179,7 +180,6 @@ class scheduleTable{
                 }
             }
         }
-
     }
 
     get_html() {
@@ -299,6 +299,12 @@ class scheduleTable{
         return $("#" + this.id).replaceWith(this.get_html())
     }
 
+    clear(){
+        this.column_ids = {}
+        this.columns = []
+        this.break_points = this.columns.slice()
+    }
+
     add_comparison(formatted_schedule, id, free_color, occupied_color, header=null){
 
         let times_len = formatted_schedule.times.length;
@@ -333,8 +339,14 @@ class scheduleTable{
         }
     
         processed["id"] = id
-        this.fill_holes(processed, occupied_color, "", "auto")
+        console.log("Processed before: ")
         console.log(processed)
+
+        this.fill_holes(processed, occupied_color, "", "auto")
+        
+        console.log("Processed after: ")
+        console.log(processed)
+        
         this.push_column(processed)
     }
 }
