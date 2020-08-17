@@ -94,8 +94,20 @@ def getBinaryRepresentation(courses):
 
 def extract_breaks(classes):
     breaks = []
-    for i in range(len(classes) - 1):
-        breaks.append( [classes[i].ends, classes[i+1].begins] )
+    if len(classes) <= 1:
+        return breaks
+
+    last_ended =  classes[0].ends
+
+    print(len(classes))
+    for i in range(1, len(classes)):
+        print(i)
+        if classes[i].course.upper() == 'LUNCH':
+            continue
+        print(i)
+
+        breaks.append([last_ended,  classes[i].begins])
+        last_ended = classes[i].ends
 
     return breaks
 
