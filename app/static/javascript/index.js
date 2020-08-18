@@ -17,7 +17,7 @@ function show_user(id){
         let response = $.ajax({
             type: 'POST',
             url: '/api/get-common-times',
-            data: {week: 1, day: 2, user_public_id: "fd846c77-48f0-4433-b6ba-29a7798914c2"},
+            data: {week: 1, day: 2, user_public_id: id},
             dataType: 'application/JSON',
             async:false
         });
