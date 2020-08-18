@@ -83,6 +83,9 @@ class Schedule(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     days_binary_representations = db.relationship('DayBinaryRepresentation', backref='schedule', lazy='dynamic')
 
+    def get_weekday(self, weekday):
+        return self.classes.filter_by(weekday=weekday).order_by(Class.begins).all()
+
     def __repr__(self):
         return "<Schedule {}>".format(self.week_number)
 

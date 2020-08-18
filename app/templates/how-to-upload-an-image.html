@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="container">
+        <h1>Sista steget nurå!</h1>
+        <p>
+            Innan du laddar upp en bild ska du helst beskära den. Följ dessa anvisningar så borde det gå bra. Du klarar det, jag tror på dig.
+            <ul>
+                <li>Beskär bilden från vänster så mycket som möjligt(!!! Viktigt speciellt på iphone 8 och uppåt) fast lämna ändå lite vitt till höger om all text.</li>
+                <li>Beskär bilden från vänser så att ungefär hälften av tiderna kapas</li>
+                <li>Beskär bilden nerifrån så att du får med den senaste kursen</li>
+            </ul>
+            <br>
+            Om du inte förstår är det du som är knäpp det är INTE JAG SOM ÄR DÅLIG PÅ ATT FÖRKLARA!!!! För det är jag, det säger mamma i alla fall så desså. 
+            <br><br>
+            Här kommer en bild ifall att du inte förstod mina gudomliga anvisningar
+        </p>
+    </div>
+    <div class="col-xs-12">
+        <img width="100%" src="{{url_for('static', filename='images/good_example.png')}}">
+    </div>
+    <img width="100%" src="{{url_for('static', filename='images/bad_example.png')}}">
+{% endblock %}

@@ -35,13 +35,29 @@
             </div>
         {% endif %}
     {% else %}
-        <h1>Login</h1>
-        <a href={{ google_auth_url }}>Login</a>
+        <div class="container">
+            <h1 class="text-center">NGodar</h1>
+
+            <p>Denna hemsida är för oss som tröttnat på Schoolsofts härliga sätt att visa scheman på...</p>
+            <div class="text-center">
+                <blockquote class="text-info text-center"><span class="text-info">Schoolsoft:</span> Logga in tusen gånger, se ditt schema en gång! Just ja, hoppas att det inte gör något att y-axeln är allt annat än proportionerlig</blockquote>
+            </div>
+
+            <p>De som tänkt längre än jag tar såklart skärmdumpar på sina scheman...<br>För att göra denna hemsida någorlunda användbar har jag lagt till några fler funktioner: </p>
+            <ul>
+                <li>Se vilka vänner som är lediga/har rast samtidigt som du</li>
+                <li>Se dina vänners schema genom att helt enkelt söka</li>
+            </ul>
+            <p>För att överföra ditt schema hit använder jag <b>PROGRAMMERING</b> och <b><a href="https://www.opencv.org">SVART MAGI</a></b> (O_o)</p>
+            <p>Vad väntar du på?</p>
+            <h3 class="text-center"><a href="{{url_for('login')}}">Logga in nU!!!</a></h3>
+        </div>
     {% endif %}
     
 {% endblock %}
 
 {% block scripts%}
+{% if current_user.is_authenticated %}
     <script id="passed-data" type="text/javascript">
         let loaded_schedules = {
             {% if preloaded_schedules %}
@@ -74,4 +90,5 @@
     <script type="text/javascript" src="{{ url_for('static', filename='javascript/utilities.js')}}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='javascript/scheduleTable.js')}}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='javascript/index.js')}}"></script>
+{% endif %}
 {% endblock %}

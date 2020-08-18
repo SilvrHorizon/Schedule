@@ -1,6 +1,14 @@
 {% extends "base.html "%}
 
 {% block content %}
-    <h1>Login</h1>
-    <a href={{ google_auth_url }}>Login</a>
+
+<div class="container">
+    <div row="col-xs-12 text-center">
+        <h1>In loggning</h1>
+        <a class="btn btn-primary" href="{{google_auth_url}}">Logga in med google</a>
+    </div>
+    <div>
+        <h5>Har du inget konto? <a href='{{url_for("signup")}}''>skriv upp dig</a></h5>
+    </div>
+</div>
 {% endblock %}

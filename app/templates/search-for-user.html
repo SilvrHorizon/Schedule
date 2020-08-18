@@ -39,7 +39,7 @@
                         </div>
                     {% else %}
                     <div class="row" id="{{ result.public_id }}">
-                        <a href="{{ url_for('user', user_public_id=result.public_id)}}"><h1 class="col-xs-12">{{ capitalize_words(result.first_name) }} <small> {{ capitalize_words(result.last_name) }}</small></h1></a>
+                        <a href="{{ url_for('user', user_public_id=result.public_id) }}"><h1 class="col-xs-12">{{ capitalize_words(result.first_name) }} <small> {{ capitalize_words(result.last_name) }}</small></h1></a>
                     </div>    
                     {% endif %}
                 </div> 

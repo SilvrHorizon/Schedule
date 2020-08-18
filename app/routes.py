@@ -22,7 +22,7 @@ from app import db, csrf
 from app.models import User, Schedule, Class, DayBinaryRepresentation
 from app import App
 from ScheduleImageProcessor import findCourses
-from customUtilities.time import hour_minute_to_minutes, format_minutes, current_week
+from customUtilities.time import hour_minute_to_minutes, format_minutes, current_week, current_weekday
 from customUtilities.schedulemanip import getBinaryRepresentation, getFreeTime, extract_breaks, extract_free_time, extract_begins, extract_ends
 from customUtilities.math import common_spans
 from app.forms import FollowUserForm
@@ -43,60 +43,97 @@ def sortFunction(e):
         return 100000
 
 
+@App.route('/api/parse-schedule', methods=["POST"])
+def parse_schedule():
+    print(request)
+    print(request.files["image"])
+    print(request.files)
+    image = request.files.get("image")
+    if not image:
+        return jsonify({"error": "No image sent"})
+    
+    img = Image.open(image.stream).convert('RGB')
+    opencvimg = np.array(img)
+    gray = cv2.cvtColor(opencvimg, cv2.COLOR_BGR2GRAY)
+    
+    courses = findCourses(gray)
+    courses.sort(key=sortFunction)
+
+    result = []
+    for course in courses:
+        print(course)
+        result.append({"weekday": course.weekday, "course": course.courseName, "span": [course.begins, course.ends]})
+
+    return jsonify({"result": result})
+
 @login_required
-@App.route('/upload-schedule', methods=['GET', 'POST'])
-@csrf.exempt
-def uploadSchedule():
-    if request.method == 'POST':
-        if request.files['image']:
-            
-            # Get courses
-            img = Image.open(request.files['image'].stream).convert('RGB')
-            opencvimg = np.array(img)
-            courses = findCourses(cv2.cvtColor(opencvimg, cv2.COLOR_BGR2GRAY), debug=True)
-            courses.sort(key=sortFunction)
+@App.route('/upload-schedule', methods=['GET', "POST"])
+def uploadSchedule(week_number=-1):
+    #Perform validation (check if there are multiple courses at the same time)
+    if request.method == 'POST' and request.json is not None:
+        print(request.json)
+        week_number = request.json["week_number"]
+        print(week_number)
 
-            schedule = None
+        courses = request.json["courses"]
+        
 
-            storedSchedule = Schedule.query.filter_by(user=current_user, week_number=-1).first()
-            if storedSchedule is not None:
-                Class.query.filter_by(schedule=storedSchedule).delete()
-                db.session.commit()
-                schedule = storedSchedule
-            else:
-                schedule = Schedule(week_number=-1, user=current_user)
-                db.session.add(schedule)
-            
-            course_by_day = [[], [], [], [], []]
-
-            for course in courses:
-                compiled = Class(begins=course.begins, ends=course.ends, course=course.courseName, weekday=course.weekday, schedule=schedule)
-                course_by_day[course.weekday].append(course)
-                db.session.add(compiled)
-
-            for i in range(len(course_by_day)):
-                rep = getBinaryRepresentation(course_by_day[i]).to_bytes(128, "big")
-                print("i:", i)
-                print(rep)
-                db.session.add(DayBinaryRepresentation(schedule=schedule, value=rep, weekday=i))
+        schedule = current_user.schedules.filter_by(week_number=week_number).first()
+        
+        if schedule is not None:
+            Class.query.filter_by(schedule=schedule).delete()
+            Schedule.query.filter_by(id=schedule.id).delete()
 
             db.session.commit()
 
-            builder = '<h1>Schemat</h1>'
-            days = {0: "Måndag", 1: "Tisdag", 2: "Onsdag", 3: "Torsdag", 4: "Fredag"}
-            for course in courses:
-                builder += '<p>'
-                try:
-                    builder += '{} på {} kl: {} till {}'.format(course.courseName, days[course.weekday], format_minutes(course.begins), format_minutes(course.ends))
-                except:
-                    builder += 'En kurs fick innehåller inte nog med data för att visas'
-                builder += '</p>'
-            return builder + "<p>{}</p>".format(getBinaryRepresentation(courses))
-        else:
-            return 'Did not get image'
+        schedule = Schedule(user=current_user, week_number=week_number)
+        db.session.add(schedule)
+        
+        
 
+        processed = []
+        for i in courses:
+            processed.append(Class(
+                course=i["course"],
+                weekday=i["weekday"],
+                begins=i["span"][0],
+                ends=i["span"][1],
+                schedule=schedule
+            ))
+        
+        processed.sort(key=sortFunction)
+        print(processed)
 
-    return render_template('upload-schedule.html')
+        
+
+        weekday = 0
+        for i in range(1, len(processed)):
+            if weekday is not processed[i].weekday:
+                weekday = processed[i].weekday
+                continue;
+            
+            if(processed[i].begins < processed[i-1].ends):
+                db.session.rollback()
+                return jsonify({"error": "Någon/Några av kurserna pågår samtidigt, fixa felen och skicka in schemat igen!"})
+        
+        #schedule.classes.delete()
+        #Class.query.filter_by(schedule_id=schedule.id).delete()
+        #db.session.commit()
+
+        for i in range(len(processed)):
+            db.session.add(processed[i])
+
+        db.session.commit()
+
+        return jsonify({"success": "success"})
+
+    selected_week = request.args.get("week")
+    if selected_week is None:
+        selected_week = -1
+    selected_week = int(selected_week)
+    
+    classes = current_user.get_schedule(selected_week).classes.all()
+    return render_template('upload-schedule.html', loaded_classes=classes, selected_week=selected_week)
 
 @App.route('/login')
 def login():
@@ -108,10 +145,11 @@ def login():
 
 @App.route('/signup')
 def signup():
+    
     authorization_endpoint = get_google_provider_config()["authorization_endpoint"]
     request_uri = oauthClient.prepare_request_uri(authorization_endpoint, redirect_uri=request.base_url + "/callback", scope=["openid", "email", "profile"])
 
-    return redirect(request_uri)
+    return render_template("signup.html", request_uri=request_uri) #redirect(request_uri)
 
 @login_required
 @App.route('/logout')
@@ -127,36 +165,33 @@ def test():
 @App.route('/index')
 @App.route('/')
 def index():
-    print('reached index')
     if current_user.is_authenticated:
-        
-        
-        #TODO handle cases where there is no standard schedule uploaded
         preloaded_schedules = {}
         followed_users = {}
         following = current_user.following.all()
-        my_classes = current_user.schedules.filter_by(week_number=-1).first().classes.filter_by(weekday=0).all()
+        my_classes = current_user.get_schedule(current_week()).get_weekday(0) #TODO set current_weekday
+
         my_breaks = extract_free_time(my_classes)
-        
+        print(my_breaks)
+
         print(my_breaks)
         for follow in following:
             followed = follow.followed
 
             if(follow.priority_level >= 2):
                 #TODO handle cases where there is no standard schedule uploaded
-                followed_schedule = followed.schedules.filter_by(week_number=-1).first()
-                followed_classses = followed_schedule.classes.filter_by(weekday=0).all()
-                
-                print(extract_free_time(followed_classses))
+                followed_schedule = followed.get_schedule(week_number=current_week()) #followed.schedules.filter_by(week_number=-1).first()
+                followed_classses = followed_schedule.get_weekday(0) #TODO set current_weekday #followed_schedule.classes.filter_by(weekday=0).all()
+
                 preloaded_schedules[followed.public_id] = {"times": common_spans(extract_free_time(followed_classses), my_breaks), 
                 "first_name": followed.first_name, "last_name": followed.last_name, "begins": extract_begins(followed_classses),"ends": extract_ends(followed_classses)}
-                
+            
             followed_users[followed.public_id] = {"level": follow.priority_level, "first_name": followed.first_name, "last_name": followed.last_name}
             
 
         return render_template('index.html', preloaded_schedules = preloaded_schedules, followed_users=followed_users)
     
-    return 'YOU ARE NOT LOGGED IN'
+    return render_template('index.html')
     
 
 
@@ -194,12 +229,22 @@ def signup_callback():
         u = User(google_id=google_id, first_name=first_name, last_name=last_name, email=email, public_id=str(uuid.uuid4()))
 
         db.session.add(u)
+        db.session.add(
+            Schedule(week_number=-1, user=u)
+        )
+        
         db.session.commit()
 
         u = User.query.filter_by(google_id=google_id).first()
         login_user(u)
 
-    return redirect(url_for('index')) 
+        return redirect(url_for('guide_welcome')) #redirect(url_for('index'))
+
+    return "<h1>Din google mail är inte verifierad var vänlig och verifiera den innan du skapar ett konto. Ditt konto har alltså inte skapats</h1>" 
+
+@App.route('/guide/welcome')
+def guide_welcome():
+    return render_template("welcome.html")
 
 @App.route('/login/callback')
 def login_callback():
@@ -238,24 +283,21 @@ def my_schedule():
     if week_number:
         week_number = int(week_number)
     else:
-        week_number = -1
+        week_number = current_week()
 
-    schedule = Schedule.query.filter_by(user_id=current_user.id, week_number=week_number).first()
-    
-    #Fall back on the standard schedule if there is no specific schedule for that week
-    if not schedule:
-        schedule = Schedule.query.filter_by(user_id=current_user.id, week_number=-1).first()
+    schedule = current_user.get_schedule(week_number) #Schedule.query.filter_by(user_id=current_user.id, week_number=week_number).first()
     
     if not schedule:
         abort(404, "Du har inget standard schema inlagt")
 
-    print(schedule.classes.all())
-    return render_template('my-schedule.html', classes=schedule.classes.all())
+    print(schedule.classes.order_by(Class.begins).all())
+    return render_template('my-schedule.html', selected_week=week_number, classes=schedule.classes.all())
 
 
 @App.route('/user/<user_public_id>')
 def user(user_public_id):
     user = User.query.filter_by(public_id=user_public_id).first()
+
     if user is None:
         return abort(404)
 
@@ -266,11 +308,11 @@ def user(user_public_id):
         
         my_schedule = current_user.get_schedule(current_week())
         for i in range(0,5):
-            user_classes = user_schedule.classes.filter_by(weekday=i).all()
+            user_classes = user_schedule.get_weekday(i) #user_schedule.classes.filter_by(weekday=i).all()
             common_times.append({
                 "begins": extract_begins(user_classes),
                 "ends": extract_ends(user_classes),
-                "times": common_spans(extract_free_time(my_schedule.classes.filter_by(weekday=i).all()), extract_free_time(user_classes))
+                "times": common_spans(extract_free_time(my_schedule.get_weekday(i)), extract_free_time(user_classes))
             })
 
     return render_template('user.html', user=user, current_week=current_week(), user_schedule=user_schedule, common_times=common_times)
@@ -312,10 +354,44 @@ def user_search(page=1):
         
     return render_template('search-for-user.html')
 
+@App.route('/api/get-user-schedule', methods=["POST"])
+def get_user_schedule():
+    public_id = request.form["user_public_id"]
+    week = request.form["week"]
+    day = request.form.get("day")
+
+    user = User.query.filter_by(public_id=public_id).first()
+
+    if user is None:
+        abort(404)
+    
+    user_schedule = user.get_schedule(week)
+    result = []
+
+    if day is None:
+        for i in range(5):
+            classes = user_schedule.get_weekday(i) #user_schedule.classes.filter_by(weekday=i).all()
+            build = []
+            for course in classes:
+                build.append({
+                    "course": course.course,
+                    "span": [course.begins, course.ends] 
+                })
+
+
+            result.append(build)
+    else:
+        classes = user_schedule.get_weekday(day) #user_schedule.classes.filter_by(weekday=day).all()
+        build = []
+        for i in classes:
+            build.append({"course": i.course, "span": [i.begins, i.ends]})
+        result.append(build)
+
+    return jsonify(result)
+
 @login_required
 @App.route('/api/get-common-times', methods=["POST"])
 def get_common_times():
-    print(request)
     public_id = request.form["user_public_id"]
     week =  request.form["week"]
     day = request.form.get("day")
@@ -329,16 +405,13 @@ def get_common_times():
     followed_schedule = followed.get_schedule(week)
     my_schedule = current_user.get_schedule(week)
 
-
-    
-
     times = None 
     begins = None
     ends = None
 
     if day is not None:
-        followed_courses = followed_schedule.classes.filter_by(weekday=day).all()
-        my_courses = my_schedule.classes.filter_by(weekday=day).all()
+        followed_courses = followed_schedule.get_weekday(day) #followed_schedule.classes.filter_by(weekday=day).all()
+        my_courses = my_schedule.get_weekday(day) #my_schedule.classes.filter_by(weekday=day).all()
 
         followed_breaks = extract_free_time(followed_courses)
         my_breaks = extract_free_time(my_courses)
@@ -352,8 +425,8 @@ def get_common_times():
         ends = []
 
         for i in range(5):
-            followed_courses = followed_schedule.classes.filter_by(weekday=i).all()
-            my_courses = my_schedule.classes.filter_by(weekday=i).all()
+            followed_courses = followed_schedule.get_weekday(i) #followed_schedule.classes.filter_by(weekday=i).all()
+            my_courses = followed_schedule.get_weekday(i) #my_schedule.classes.filter_by(weekday=i).all()
 
             followed_breaks = extract_free_time(followed_courses)
             my_breaks = extract_free_time(my_courses)
@@ -369,6 +442,8 @@ def get_common_times():
         'begins': begins,
         'ends': ends
     } 
+    print("hello")
+    print(result)
 
     return jsonify({"status": "success", "result": result})
     
@@ -397,3 +472,7 @@ def follow_user():
 
     print(f'User: {user_public_id}, prioritylevel: {priority_level}')
     return jsonify({'status': 'success'})
+
+@App.route('/guide/upload-schedule')
+def guide_upload_schedule():
+    return render_template('how-to-upload-an-image.html')

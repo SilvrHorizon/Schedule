@@ -9,4 +9,5 @@ class Course(object):
         self.weekday = weekday
 
     def __repr__(self):
-        return "Course<Type:{}, Day:{}, Begins:{:02d}:{:02d}, Ends:{:02d}:{:02d}>".format(self.courseName, self.weekday, self.begins[0], self.begins[1], self.ends[0], self.ends[1])
+        return f'Course<Type: {self.courseName}, Begins: {self.begins}, Ends: {self.ends}, Weekday: {self.weekday}'
+        #return "Course<Type:{}, Day:{}, Begins:{:02d}:{:02d}, Ends:{:02d}:{:02d}>".format(self.courseName, self.weekday, self.begins[0], self.begins[1], self.ends[0], self.ends[1])

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div row="col-xs-12 text-center">
+        <h1>Uppskrivning</h1>
+        <a class="btn btn-primary" href="{{request_uri}}">Skriv upp dig med google</a>
+        <p>Genom att trycka "Skriv upp dig med google" godkänner du att ditt förnamn, efternamn och mail address att publiceras på denna hemsida</p>
+    </div>
+
+    <div>
+        <h5>Har redan ett konto? <a href='{{url_for("login")}}''>logga in</a></h5>
+    </div>
+</div>
+{% endblock %}

@@ -7,7 +7,7 @@
         </div>
 
         <div class="row">
-            <select class="col-xs-12 input">
+            <select class="col-xs-12 input" onchange="update_week(this.value)">
                 {% for i in range(1, 53) %}
                     <option {% if current_week == i%}selected {% endif %}>{{i}}</option>
                 {% endfor %}
@@ -28,7 +28,8 @@
 
     <script src="{{ url_for('static', filename='javascript/utilities.js') }}"></script>
     <script id="passed_data">
-        let current_week = {{ current_week }}
+        let user_public_id = "{{ user.public_id }}";
+        let current_week = {{ current_week }};
         let user_schedules = {
             {% if user_schedule %}
                 {{ current_week }}: [
