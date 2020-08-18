@@ -95,21 +95,6 @@ def findCourses(grayImage, debug=False):
                     cv2.rectangle(grayImage, (x, y), (scanX, scanY), 0, -1)
                     continue
 
-                
-                if courseBoxWidth is None:
-                    courseBoxWidth = scanX - x
-                    estimatedWeekdayPositions = []
-
-                    for i in range(5):
-                        estimatedWeekdayPositions.append(grayImage.shape[1] - courseBoxWidth * (5 - i))
-                    print("estimatedWeekdayPositions:", estimatedWeekdayPositions)
-
-                foundWeekday = -1
-                tolerance = courseBoxWidth * 0.4
-                for i in range(len(estimatedWeekdayPositions)):
-                    if estimatedWeekdayPositions[i] - tolerance < x and x < estimatedWeekdayPositions[i] + tolerance:
-                        foundWeekday = i
-
                 # Divide the string to be able to get access to the information sepately
                 parsed = text.split('\n')
                 parsed = list(filter(None, parsed))  # Remove empty strings caused by tesseract
@@ -120,12 +105,29 @@ def findCourses(grayImage, debug=False):
 
                 courseText = parsed[0]
                 timeSpan = parsed[1]
-
-                matchedCourse = None
-                for course in courses:
-                    if text[0: len(course)] == course:
-                        matchedCourse = course
                 
+                if courseBoxWidth is None:
+                    print("Decieded:", courseText)
+                    courseBoxWidth = scanX - x
+                    estimatedWeekdayPositions = []
+
+                    for i in range(5):
+
+                        estimatedWeekdayPositions.append(grayImage.shape[1] - courseBoxWidth * (5 - i))
+                    print("Scanx and y: ", scanX, " ", scanY, " x:", x, " y: ", y)
+                    print("estimatedWeekdayPositions:", estimatedWeekdayPositions)
+                
+
+                foundWeekday = -1
+                tolerance = courseBoxWidth * 0.4
+                print("Course: ", courseText, " pos: ", x)
+                for i in range(len(estimatedWeekdayPositions)):
+                    if estimatedWeekdayPositions[i] - tolerance < x and x < estimatedWeekdayPositions[i] + tolerance:
+                        foundWeekday = i
+
+
+                matchedCourse = courseText
+
                 try:
                     beginTime, endTime = timeSpan.split('-')
                     beginTime = list(map(int, beginTime.split(':', 2)))
