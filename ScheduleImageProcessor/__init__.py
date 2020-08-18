@@ -7,7 +7,7 @@ from ScheduleImageProcessor.course import Course
 from customUtilities.time import hour_minute_to_minutes 
 
 # Initiate pytesseract
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+# pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 def checkLine(line):
     for i in line:
@@ -28,7 +28,7 @@ def enhanceLines(grayImage):
     for p in range(cropped.shape[1]):
         if(checkLine(cropped[:, p])):
             cv2.line(grayImage, (p, 0), (p, grayImage.shape[0] - 1), 0, thickness=1)
-    cv2.imshow("Enhanced lines", cropped)
+    #cv2.imshow("Enhanced lines", cropped)
     
 def findCourses(grayImage, debug=False):
     white = 230
@@ -82,10 +82,10 @@ def findCourses(grayImage, debug=False):
                 
                 # cv2.GaussianBlur(cropped, (0,0), cv2.BORDER_DEFAULT)
 
-                if debug:
-                    cv2.imshow('cropped', cropped)
-                    cv2.imshow("image", grayImage) 
-                    cv2.waitKey()
+                #if debug:
+                    #cv2.imshow('cropped', cropped)
+                    #cv2.imshow("image", grayImage) 
+                    #cv2.waitKey()
 
                 config = "--psm 6, -l swe"  
                 text = pytesseract.image_to_string(cropped, config=config)
