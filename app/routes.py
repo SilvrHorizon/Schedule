@@ -27,6 +27,8 @@ from customUtilities.schedulemanip import getBinaryRepresentation, getFreeTime, 
 from customUtilities.math import common_spans
 from app.forms import FollowUserForm
 
+from time import sleep
+
 # oAuth2 client setup
 oauthClient = WebApplicationClient(Config.GOOGLE_CLIENT_ID)
 
@@ -159,8 +161,8 @@ def logout():
 
 @App.route('/test')
 def test():
-    login_user(User.query.get(1))
-    return url_for('index')
+	sleep(119)
+	return jsonify("Success", "success")
 
 @App.route('/index')
 @App.route('/')

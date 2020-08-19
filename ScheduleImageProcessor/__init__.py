@@ -7,7 +7,7 @@ from ScheduleImageProcessor.course import Course
 from customUtilities.time import hour_minute_to_minutes 
 
 # Initiate pytesseract
-# pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+pytesseract.pytesseract.tesseract_cmd = r"/usr/bin/tesseract"
 
 def checkLine(line):
     for i in line:
@@ -91,7 +91,7 @@ def findCourses(grayImage, debug=False):
                 text = pytesseract.image_to_string(cropped, config=config)
 
                 # The blocks that have fewer than 5 chars are not interessting
-                if len(text) < 5:
+                if len(text) < 8:
                     cv2.rectangle(grayImage, (x, y), (scanX, scanY), 0, -1)
                     continue
 
@@ -127,7 +127,8 @@ def findCourses(grayImage, debug=False):
 
 
                 matchedCourse = courseText
-
+		
+		#print(endTime)
                 try:
                     beginTime, endTime = timeSpan.split('-')
                     beginTime = list(map(int, beginTime.split(':', 2)))
