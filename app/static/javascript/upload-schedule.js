@@ -3,7 +3,6 @@ function get_course_value(course){
     return course.weekday * 60 * 24 + course.begins
 }
 
-
 function clear_results(){
     for(let i = 0; i < 5; i++){
         $("#result-day-" + i + " .weekday-results").html('')
@@ -64,10 +63,9 @@ function submit_schedule(){
     let all_forms =  $(".form-upper");
     courses = [];
     let success = true;
+
     for(let i = 0 ; i <  all_forms.length; i++){
         let form = $(all_forms[i])
-
-        //Do validation sp there are no colliding courses
 
         let course = {"span" :[
             extractMinutesFromString($(form).find(".form-begins").val()),
@@ -109,10 +107,17 @@ function submit_schedule(){
                 dataType: "json",
                 contentType: "application/json",
                 data: JSON.stringify({week_number: parseInt($("#week-select").val()), courses: courses}),
+                
                 success: function(result){
                     if(!result.success){
                         alert(result.error)
+                    } else {
+                        alert('Ändringar sparade')
                     }
+                },
+
+                fail: function(error){
+                    alert(error)
                 }
             },
         )
@@ -153,7 +158,8 @@ $("#parse-form").submit(
                 }
             },
             error: function (e) {
-                alert("Kunde inte nå servern // serverfel") 
+                console.log(e)
+                alert("Fel: " + e.statusText) 
                 console.log(e)
             }
         });
@@ -166,12 +172,12 @@ function add_course_field(weekday){
     )
 }
 
-function load_week(){
+function load_week(selected_week){
     $.post(
         "/api/get-user-schedule",
         {
             user_public_id: user_public_id,
-            week: parseInt($("#week-select").val())
+            week: parseInt(selected_week)
         },
         function(result){
             console.log( result)
@@ -189,6 +195,6 @@ function load_week(){
 
 $(document).ready(
     function(){
-        load_week()
+        load_week(selected_week)
     }
 )

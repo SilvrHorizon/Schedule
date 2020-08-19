@@ -11,15 +11,16 @@
 
 {% block content %}
 <div class="container">
-    <div class="row">
-        <h4 class="col-xs-12 text-center">Tolka en skärmdump</h4>
-        <p><span class="text-danger">VIKTIGT!!</span> Tryck <a href="{{url_for('guide_upload_schedule')}}">här</a> om du inte gjort detta tidigare</p>
-    </div>
-
+    
     <div class="row" style="margin-bottom: 2rem;" id="parse-form-row">    
+        <div class="row">
+            <h4 class="col-xs-12 text-center">Tolka en skärmdump</h4>
+            <h1><span class="text-danger">VIKTIGT!!</span> Tryck <a href="{{url_for('guide_upload_schedule')}}">här</a> om du inte gjort detta tidigare</h1>
+        </div>
+        
         <form method="post" enctype="multipart/form-data" id="parse-form">
             <div class="row">
-                <label for="image" class="col-form-label col-xs-6">Ladda upp en bild på ditt schema:<!--<br>(<a href="#">VIKTIG INFO</a>)---></label>
+                <label for="image" class="col-form-label col-xs-6">Ladda upp en bild på ditt schema:</label>
                 <div class="col-xs-6">
                     <input type="file" id="image" name="image" class="form-control-file col-xs-12" accept="image/*">
                 </div>
@@ -41,13 +42,6 @@
 <div class="container" id="result-block">
     <div class="row">
         <h4 class="col-xs-12 text-center">Ändra schemat</h4>
-        <label for="week-select" class="col-xs-4">Välj vecka: </label>
-        <select onchange="load_week()" id="week-select" class="col-xs-8 input">
-            <option name="week-select" value="-1">Standard schema</option>
-            {% for i in range(1, 53)%}
-            <option {% if selected_week == i %} selected {% endif %}>{{i}}</option>
-            {% endfor %}
-        </select>
         <button onclick="submit_schedule()" class="col-xs-12 btn btn-primary">Spara ändringar</button>
     </div>
 
@@ -64,68 +58,13 @@
         {% endfor %}
     {% endwith %}
 </div>
-    <!--
-    <div id="result-day-0">
-        <div class="row">
-            <h1 class="col-xs-12">Måndag</h1>
-            <button onclick="add_course_field('0')" class="col-xs-12 btn btn-primary">Lägg till klass</button>
-        </div>
-    </div>
-
-    <div id="result-day-1">
-        <div class="row">
-            <h1 class="col-xs-12">Tisdag</h1>
-            <button onclick="add_course_field('1')" class="col-xs-12 btn btn-primary">Lägg till klass</button>
-        </div>
-    </div>
-
-    <div id="result-day-2">
-        <div class="row">
-            <h1 class="col-xs-12">Onsdag</h1>
-            <button onclick="add_course_field('2')" class="col-xs-12 btn btn-primary">Lägg till klass</button>
-        </div>
-    </div>
-
-    <div id="result-day-3">
-        <div class="row">
-            <h1 class="col-xs-12">Torsdag</h1>
-            <button onclick="add_course_field('3')" class="col-xs-12 btn btn-primary">Lägg till klass</button>
-        </div>
-    </div>
-
-    <div id="result-day-4">
-        <div class="row">
-            <h1 class="col-xs-12">Fredag</h1>
-            <button onclick="add_course_field('4')" class="col-xs-12 btn btn-primary">Lägg till klass</button>
-        </div>
-    </div>
-</div>
--->
-
-<!---
-    <form method="post" enctype="multipart/form-data">
-        <p>
-            <input type=file name=image>
-            <input type=submit value=Upload> 
-        </p>
-    </form>
-
-    <p>
-        Hej, hej pojkar nu får ni ta del av min programm testning, tack så mycket!
-        Det ni gör är att ni tar era bilder som ni har på ert schoolsoft schema, beskär det så att endast själva schema biten är kvar.
-        När ni beskärt er bild i kamerarullen laddar ni sedan upp den beskärda bilden på hemsidan och trycker ladda upp.
-        Hemsidan kommer ladda ett tag och sedan får ni ert schema i textform. Jämnför det gärna med erat faktiska schema och berätta sedan för mig hur bra det stämmde.
-        TACK SÅ MYCKET :D
-
-    </p>
-
-    -->
 
 {% endblock %}
 
 {% block scripts %}
     <script type="text/javascript" id="passed_data">
         let user_public_id = "{{current_user.public_id}}";
+        let selected_week = {{ selected_week }};
     </script>
 
     <script type="text/javascript" src="{{url_for('static', filename='javascript/utilities.js')}}"></script>
