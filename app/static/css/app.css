@@ -113,3 +113,10 @@
 body { 
   padding-top: 65px; 
 }
+
+.schedule-container{
+  overflow-y: hidden;
+  overflow-x: auto;
+  width: auto;
+  margin-bottom: 10px;
+}

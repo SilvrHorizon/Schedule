@@ -33,7 +33,7 @@ function set_user_schedule(week_data){
 
 function set_common_times_schedule(week_data){
     for(i = 0; i < week_data.length; i++){
-        common_times_table.add_comparison(week_data[i], "common-times-day" + i, "#AF6D7E", "#FF6848", days[i])
+        common_times_table.add_comparison(week_data[i], "common-times-day" + i, standard_free_color, standard_occupied_color, days[i])
     }
     common_times_table.time_column()
 }

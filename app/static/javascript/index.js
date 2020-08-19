@@ -1,7 +1,4 @@
 let schedule_table = new scheduleTable("primary-table", "table-dark");
-let occupied_color = "#151E3F"
-let free_color = "#5DA9E9"    
-
 
 function hide_user(id){
     schedule_table.remove_by_id(id);
@@ -32,7 +29,7 @@ function show_user(id){
         loaded_schedules[id] = schedule
     }
 
-    schedule_table.add_comparison(schedule, id, free_color, occupied_color)
+    schedule_table.add_comparison(schedule, id, standard_free_color, standard_occupied_color)
     loaded_users[id].shown = true;
     $("#schedule-button-" + id).removeClass('btn-warning').addClass('btn-primary')
 }
@@ -65,7 +62,7 @@ $( document ).ready(function () {
     schedule_table.time_column()
 
     for(let i in loaded_schedules){
-        schedule_table.add_comparison(loaded_schedules[i], i, free_color, occupied_color)
+        schedule_table.add_comparison(loaded_schedules[i], i, standard_free_color, standard_occupied_color)
     }
     $("#common_times_div").html(schedule_table.get_html()) 
 });

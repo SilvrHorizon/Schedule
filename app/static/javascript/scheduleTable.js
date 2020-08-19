@@ -1,3 +1,6 @@
+let standard_occupied_color = "#151E3F"
+let standard_free_color = "#5DA9E9"    
+
 class scheduleTable{
     constructor(id, classes = "", header_size=30, render_start=hourMinuteToMinutes([8,0]), render_end=hourMinuteToMinutes([17,30])){
         this.render_start = render_start
@@ -320,7 +323,7 @@ class scheduleTable{
             let color = free_color;
             
             if(formatted_schedule.times[span][1] <= formatted_schedule.begins){
-                color = "black"
+                color = "gray"
             }
     
             if(formatted_schedule.times[span][0] >= formatted_schedule.ends){
