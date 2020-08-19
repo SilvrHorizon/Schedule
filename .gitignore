@@ -2,3 +2,4 @@ __pycache__/
 set_secrets.bat
 .vscode
 venv/
+secrets.json
