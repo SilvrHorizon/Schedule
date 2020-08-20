@@ -171,7 +171,7 @@ def index():
         preloaded_schedules = {}
         followed_users = {}
         following = current_user.following.all()
-        my_classes = current_user.get_schedule(current_week()).get_weekday(0) #TODO set current_weekday
+        my_classes = current_user.get_schedule(current_week()).get_weekday(current_weekday()) #TODO set current_weekday
 
         my_breaks = extract_free_time(my_classes)
         print(my_breaks)
@@ -183,7 +183,7 @@ def index():
             if(follow.priority_level >= 2):
                 #TODO handle cases where there is no standard schedule uploaded
                 followed_schedule = followed.get_schedule(week_number=current_week()) #followed.schedules.filter_by(week_number=-1).first()
-                followed_classses = followed_schedule.get_weekday(0) #TODO set current_weekday #followed_schedule.classes.filter_by(weekday=0).all()
+                followed_classses = followed_schedule.get_weekday(current_weekday()) #TODO set current_weekday #followed_schedule.classes.filter_by(weekday=0).all()
 
                 preloaded_schedules[followed.public_id] = {"times": common_spans(extract_free_time(followed_classses), my_breaks), 
                 "first_name": followed.first_name, "last_name": followed.last_name, "begins": extract_begins(followed_classses),"ends": extract_ends(followed_classses)}
