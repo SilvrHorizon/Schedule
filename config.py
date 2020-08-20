@@ -24,6 +24,9 @@ class Config(object):
 
     TESSERACT_PATH = os_specific.get('TESSERACT_PATH')
 
+    RUN_IP = os_specific.get('RUN_IP')
+    RUN_PORT = os_specific.get('RUN_PORT')
+
 
 
 def get_google_provider_config():
