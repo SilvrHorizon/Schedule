@@ -3,3 +3,4 @@ set_secrets.bat
 .vscode
 venv/
 secrets.json
+os_specific_config.json

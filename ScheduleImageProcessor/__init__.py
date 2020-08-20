@@ -1,13 +1,14 @@
 import numpy as np
 import cv2
 import pytesseract
+from config import Config
 
 from skimage.transform import rescale
 from ScheduleImageProcessor.course import Course
 from customUtilities.time import hour_minute_to_minutes 
 
 # Initiate pytesseract
-pytesseract.pytesseract.tesseract_cmd = r"/usr/bin/tesseract"
+pytesseract.pytesseract.tesseract_cmd = Config.TESSERACT_PATH
 
 def checkLine(line):
     for i in line:
@@ -118,27 +119,29 @@ def findCourses(grayImage, debug=False):
                     print("estimatedWeekdayPositions:", estimatedWeekdayPositions)
                 
 
+
+
+                matchedCourse = courseText
+
+                try:
+                    beginTime, endTime = timeSpan.split('-')
+                    beginTime = list(map(int, beginTime.split(':', 2)))
+                    endTime = list(map(int, endTime.split(':', 2)))
+                    #print("Found:", Course(matchedCourse, beginTime, endTime, foundWeekday))
+                except:
+                    print("Timespan", timeSpan)
+                    print('OCR was confused')
+                    cv2.rectangle(grayImage, (x, y), (scanX, scanY), 0, -1)  
+                    continue
+
                 foundWeekday = -1
                 tolerance = courseBoxWidth * 0.4
                 print("Course: ", courseText, " pos: ", x)
                 for i in range(len(estimatedWeekdayPositions)):
                     if estimatedWeekdayPositions[i] - tolerance < x and x < estimatedWeekdayPositions[i] + tolerance:
                         foundWeekday = i
-
-
-                matchedCourse = courseText
-		
-		#print(endTime)
-                try:
-                    beginTime, endTime = timeSpan.split('-')
-                    beginTime = list(map(int, beginTime.split(':', 2)))
-                    endTime = list(map(int, endTime.split(':', 2)))
-                    print("Found:", Course(matchedCourse, beginTime, endTime, foundWeekday))
-                    foundCourses.append(Course(matchedCourse, hour_minute_to_minutes(beginTime), hour_minute_to_minutes(endTime), foundWeekday))
-                except:
-                    
-                    print("Timespan", timeSpan)
-                    print('OCR was confused')
+                
+                foundCourses.append(Course(matchedCourse, hour_minute_to_minutes(beginTime), hour_minute_to_minutes(endTime), foundWeekday))
                 # Make sure that this region will not be selected again
                 cv2.rectangle(grayImage, (x, y), (scanX, scanY), 0, -1)  
                 if debug:
