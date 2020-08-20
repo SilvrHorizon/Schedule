@@ -15,6 +15,8 @@ class scheduleTable{
         this.opening_tag = ["<table id=\"" + id + "\"class=\" py-0 my-0 " + classes + "\" style=\"border: 2px dotted #FFFFFF; width: 100%;\">"];
         this.column_ids = {}
 
+        this.scale = 0.7
+
         this.time_column_data = {"data": [], "header": null}
         this.use_time_column = false
         this.time_column_horizontal_lines = true
@@ -94,6 +96,7 @@ class scheduleTable{
                 }
 
                 for(let time in column.data[i].span){
+                    //column.data[i].span[time] *= this.scale
                     time = column.data[i].span[time]
                     
                     this.add_break_point(time)
@@ -120,14 +123,12 @@ class scheduleTable{
 
     get_tr(size){
         return "<tr class=\"no-y\" style=\"border: none;\" height=\"" + size + "px\">";
-        //return "<tr class=\"no-y\" style=\"border: none; line-height: " + size + "px\" height=\"" + size + "px\">";
     }
 
     get_td(row_span, color="white", width="", extra_styles=""){
         let build = []
         build.push("<td ")
-        
-        build.push("class=\"text-center\"style=\"white-space: nowrap; border-right: solid 1px #000; padding-right: 3px; padding-left: 3px; background-color: ")
+        build.push("class=\"text-center\" style=\"font-size: " + this.scale + "em; white-space: nowrap; border-right: solid 1px #000; padding-right: 3px; padding-left: 3px; background-color: ")
         build.push(color)
         
         if(width != ""){
@@ -215,7 +216,7 @@ class scheduleTable{
         build.push("</tr>")
 
         for(let i = 0; i < this.break_points.length - 1; i++){
-            let row = [this.get_tr(this.break_points[i + 1] - this.break_points[i])]
+            let row = [this.get_tr((this.break_points[i + 1] - this.break_points[i]) * this.scale)]
             
             for(let j = 0; j < compare_indexes.length; j++){
 
@@ -314,7 +315,7 @@ class scheduleTable{
         let processed = {"header": null, "data": [], "id": null}
 
         if(header === null){
-            processed["header"] = this.build_header(formatted_schedule.first_name + "<br />" + formatted_schedule.last_name)
+            processed["header"] = this.build_header("<a href='/user/" + id + "'>" + formatted_schedule.first_name + "<br />" + formatted_schedule.last_name + "</a><br />" + formatMinutes(formatted_schedule.begins) + "-" + formatMinutes(formatted_schedule.ends))
         } else {
             processed["header"] = this.build_header(header)
         }
