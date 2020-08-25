@@ -15,7 +15,5 @@ function formatMinutes(minutes){
 }
 
 function extractMinutesFromString(string){
-    console.log(parseInt(string.substr(0,2)))
-    console.log(parseInt(string.substr(3,5)))
     return parseInt(string.substr(0,2)) * 60 + parseInt(string.substr(3,5))
 }

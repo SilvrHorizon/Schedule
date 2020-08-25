@@ -27,6 +27,8 @@ function show_week(week){
 $(document).ready(
     function(){
         $("#schedule-table-div").append(schedule_table.get_html())
+        $("#week-select").val(selected_week)
+        
         show_week(selected_week)
         schedule_table.update()
     }
@@ -34,7 +36,6 @@ $(document).ready(
 
 
 function show_schedule(week_data){
-    console.log(week_data)
     schedule_table.clear()
     for(let i = 0; i < week_data.length; i++){
         let processed = {"header": null, "data": [], "id": null}

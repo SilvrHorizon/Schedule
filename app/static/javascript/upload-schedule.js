@@ -1,3 +1,155 @@
+let rudbeck_blocks = [
+    [ //Block 1
+        {
+            "weekday": 0,
+            "span": [500, 615]
+        },
+        {
+            "weekday": 2,
+            "span": [630, 690]
+        },
+        {
+            "weekday": 3,
+            "span": [835, 895]
+        },
+    ],
+    [ //Block 2
+        {
+            "weekday": 0,
+            "span": [630, 690]
+        },
+        {
+            "weekday": 2,
+            "span": [500, 615]
+        },
+        {
+            "weekday": 3,
+            "span": [905, 965]
+        },
+    ],
+    [ //Block 3
+        {
+            "weekday": 0,
+            "span": [700, 760]
+        },
+        {
+            "weekday": 2,
+            "span": [765, 825]
+        },
+        {
+            "weekday": 3,
+            "span": [700, 760]
+        },
+        {
+            "weekday": 4,
+            "span": [765, 815]
+        },
+    ],
+    [ //Block 4
+        {
+            "weekday": 0,
+            "span": [765, 825]
+        },
+        {
+            "weekday": 2,
+            "span": [700, 760]
+        },
+        {
+            "weekday": 3,
+            "span": [765, 825]
+        },
+        {
+            "weekday": 4,
+            "span": [700, 750]
+        }, 
+    ],
+    [ //Block 5
+        {
+            "weekday": 0,
+            "span": [835, 895]
+        },
+        {
+            "weekday": 1,
+            "span": [500, 615]
+        },
+        {
+            "weekday": 4,
+            "span": [630, 690]
+        },
+    ],
+    [ //Block 6
+        {
+            "weekday": 0,
+            "span": [905, 965]
+        },
+        {
+            "weekday": 1,
+            "span": [630, 690]
+        },
+        {
+            "weekday": 4,
+            "span": [500, 615]
+        },
+    ],
+    [ //Block 7
+        {
+            "weekday": 1,
+            "span": [785, 845]
+        },
+        {
+            "weekday": 3,
+            "span": [500, 615]
+        },
+        {
+            "weekday": 4,
+            "span": [905, 965]
+        },
+    ],
+    [ //Block 8
+        {
+            "weekday": 1,
+            "span": [855, 965]
+        },
+        {
+            "weekday": 3,
+            "span": [630, 690]
+        },
+        {
+            "weekday": 4,
+            "span": [835, 895]
+        },
+    ],
+]
+
+function course_sort_function(a, b){
+    return a.span[0] - b.span[0]
+}
+
+
+schedule_type = ""
+
+days = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag"]
+for(let block in rudbeck_blocks){
+    console.log("Block: " + (parseInt(block) + 1))
+    
+    for(let instance in rudbeck_blocks[block]){
+        console.log(days[rudbeck_blocks[block][instance].weekday] + ": " + formatMinutes(rudbeck_blocks[block][instance].span[0]) + "-" + formatMinutes(rudbeck_blocks[block][instance].span[1]))
+    }
+    console.log("\n")
+}
+
+
+function update_schedule_type(value)
+{
+    schedule_type = value
+    if(schedule_type == "rbk-block"){
+        $("#rbk-blocks").show()
+    } else{
+        $("#rbk-blocks").hide()
+    }
+}
+
+//days = {0: "Måndag", 1 : "Tisdag", 2: "Onsdag", 3:"Torsdag", 4:"Fredag"}
 let id_track = 0
 function get_course_value(course){
     return course.weekday * 60 * 24 + course.begins
@@ -21,7 +173,7 @@ function create_course_form(course){
     build.push('<form id="course-form-' + id_track + '" class="form form-upper"><div class="form-group row">')
     build.push('<input class="form-weekday" type="hidden" value="')
     build.push(course.weekday)
-    console.log(course.weekday)
+    //console.log(course.weekday)
     build.push('"> <div class="col-xs-8">')
     build.push("<input placeholder='Skriv in kurs' type='text' value='")
     build.push(course.course)
@@ -59,6 +211,12 @@ function create_course_form(course){
     return build.join('')
 }
 
+function clear_rbk_blocks(){
+    for(let block = 0; block < 8; block++){
+        $("#rbk-block-input-" + block).val('')
+    }
+}
+
 function submit_schedule(){
     let all_forms =  $(".form-upper");
     courses = [];
@@ -76,14 +234,11 @@ function submit_schedule(){
         }
 
         if(course.span[0] > course.span[1]){
-            console.log(course.course + " " + course.weekday)
-            console.log(course.span[0] + " " + course.span[1])
             success = false;
             alert("En (eller flera) av kurserna slutar tidigare än vad den börjar!")
             break;
         }
 
-        console.log(course.span)
         if(isNaN(course.span[0]) || isNaN(course.span[1])){
             success = false
             alert("Du har inte fyllt i tiderna för en eller flera av klasserna");
@@ -106,7 +261,7 @@ function submit_schedule(){
                 type: "POST",
                 dataType: "json",
                 contentType: "application/json",
-                data: JSON.stringify({week_number: parseInt($("#week-select").val()), courses: courses}),
+                data: JSON.stringify({week_number: selected_week, courses: courses}),
                 
                 success: function(result){
                     if(!result.success){
@@ -123,8 +278,42 @@ function submit_schedule(){
         )
         
     }
+}
 
-    console.log(courses)
+
+function update_forms_by_rbk_blocks(blocks = null){
+    clear_results()
+
+    if(blocks == null){
+        blocks = {};
+        for(let i = 0; i < 8; i++){
+            blocks[i] = ($("#rbk-block-input-" + i).val())
+        }
+    }
+
+    let courses = []
+
+    for(let i in blocks){
+        if(blocks[i] == ""){
+            continue;
+        }
+        console.log(blocks[i])
+        console.log(i)
+
+        for(let instance in rudbeck_blocks[i]){
+            console.log(rudbeck_blocks[i][instance])
+            courses.push({weekday: rudbeck_blocks[i][instance].weekday, span: rudbeck_blocks[i][instance].span, course: blocks[i]})
+        }
+
+         
+    }
+
+    courses.sort(course_sort_function)
+
+    for(let course in courses){
+        course = courses[course]
+        $("#result-day-" + course.weekday + " .weekday-results").append(create_course_form(course))
+    }
 }
 
 $("#parse-form").submit(
@@ -147,14 +336,54 @@ $("#parse-form").submit(
                 $("#loading-row").hide()
                 $("#result-block").show()
                 $("#parse-form-row").show()
+                clear_rbk_blocks()
                 clear_results()
 
                 let data = result.result
-                console.log(data);
                 
-                for(let i in data){
-                    console.log(data[i])
-                    $("#result-day-" + data[i].weekday + " .weekday-results").append(create_course_form(data[i]))
+                if(schedule_type == "rbk-block"){
+                    
+                    let blocks_remaining = [ //No loop for performance, and I can't be bothered to add a loop for something that only changes about once a year
+                        0,1,2,3,4,5,6,7
+                    ]
+
+                    let found_blocks = {}
+
+                    for(let course in data){
+                        course = data[course]
+                        if(course.course == ""){
+                            continue;
+                        }
+
+                        for(let i in blocks_remaining){
+                            let block_instance = rudbeck_blocks[blocks_remaining[i]]
+
+                            for(let k in block_instance){
+                                if(block_instance[k].weekday == parseInt(course.weekday)){
+                                    if(block_instance[k].span[0] === course.span[0]){
+                                        if(block_instance[k].span[1] === course.span[1]){
+                                            //console.log("Kurs: " + course.course + " i block " + blocks_remaining[i])
+                                            found_blocks[blocks_remaining[i]] = course.course
+                                            //blocks_remaining.splice(i, 1)
+                                            break;
+                                        }    
+                                    }
+                                }
+                            }
+                        } 
+                    }
+                    console.log(found_blocks)
+                    for(let i in found_blocks){
+                        $("#rbk-block-input-" + i).val(found_blocks[i])
+                    }
+
+                    update_forms_by_rbk_blocks()
+
+                } else { 
+                    for(let i in data){
+                        console.log(data[i])
+                        $("#result-day-" + data[i].weekday + " .weekday-results").append(create_course_form(data[i]))
+                    }
                 }
             },
             error: function (e) {
@@ -173,11 +402,13 @@ function add_course_field(weekday){
 }
 
 function load_week(selected_week){
+    console.log(selected_week)
+
     $.post(
         "/api/get-user-schedule",
         {
             user_public_id: user_public_id,
-            week: parseInt(selected_week)
+            week: selected_week
         },
         function(result){
             console.log( result)
@@ -196,5 +427,6 @@ function load_week(selected_week){
 $(document).ready(
     function(){
         load_week(selected_week)
+        update_schedule_type($("#schedule-type-select").val())
     }
 )

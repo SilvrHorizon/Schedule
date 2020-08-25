@@ -11,8 +11,14 @@
 
 {% block content %}
 <div class="container">
-    
-    <div class="row" style="margin-bottom: 2rem;" id="parse-form-row">    
+    <div class="row" style="margin-bottom: 2rem;" id="parse-form-row">
+        <div class="row" style="margin-bottom: 2rem;">
+            <h3 class="col-xs-12 text-center">Välj schema typ</h3>
+            <select id="schedule-type-select" class="col-xs-12 text-center" onchange="update_schedule_type(this.value)" style="color: black">
+                <option value="rbk-block">Rudbeck blockschema</option>
+                <option value="schoolsoft-standard">Vanligt schoolsoft schema (måste vara helt vitt)</option>  
+            </select>
+        </div>
         <div class="row">
             <h4 class="col-xs-12 text-center">Tolka en skärmdump</h4>
             <h1><span class="text-danger">VIKTIGT!!</span> Tryck <a href="{{url_for('guide_upload_schedule')}}">här</a> om du inte gjort detta tidigare</h1>
@@ -45,6 +51,17 @@
         <button onclick="submit_schedule()" class="col-xs-12 btn btn-primary">Spara ändringar</button>
     </div>
 
+    <div id="rbk-blocks">
+        {% for i in range(8) %}
+        <div id="rbk-block-{{i}}" class="row">
+            <h4 class="col-xs-4">Block {{i + 1}}</h4>
+            <input id="rbk-block-input-{{i}}" type="text" class="input col-xs-8">
+        </div>
+        {% endfor %}
+        <button class="btn btn-warning col-xs-12" onclick="update_forms_by_rbk_blocks()">Uppdatera</button>
+    </div>
+
+
     {% with days = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag"]%}    
         {% for i in range(5)%}
             <div id="result-day-{{i}}">
@@ -67,6 +84,6 @@
         let selected_week = {{ selected_week }};
     </script>
 
-    <script type="text/javascript" src="{{url_for('static', filename='javascript/utilities.js')}}"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='javascript/upload-schedule.js')}}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='javascript/utilities.js')}}?2"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='javascript/upload-schedule.js')}}?2"></script>
 {% endblock %}

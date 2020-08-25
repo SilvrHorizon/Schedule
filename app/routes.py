@@ -47,9 +47,17 @@ def sortFunction(e):
 
 @App.route('/api/parse-schedule', methods=["POST"])
 def parse_schedule():
-    print(request)
-    print(request.files["image"])
-    print(request.files)
+    #TESTING
+    #u = User.query.get(1)
+    #courses = u.get_schedule(-1).classes.all()
+    #result = []
+    #for course in courses:
+    #    print(course)
+    #    result.append({"weekday": course.weekday, "course": course.course, "span": [course.begins, course.ends]})
+
+    #return jsonify({"result": result})
+    #TESTING END
+
     image = request.files.get("image")
     if not image:
         return jsonify({"error": "No image sent"})
@@ -78,8 +86,20 @@ def uploadSchedule(week_number=-1):
         print(week_number)
 
         courses = request.json["courses"]
-        
 
+        if courses == "USE_STANDARD":
+
+            if week_number != -1:
+                schedule = current_user.schedules.filter_by(week_number=week_number).first()
+                if schedule is not None:
+                    schedule.classes.delete()
+                    db.session.delete(schedule)
+                    db.session.commit()
+                return jsonify({"success": "success"})
+            else:
+                return jsonify({"error": "could not use standard schedule for standard schedule"})
+
+         
         schedule = current_user.schedules.filter_by(week_number=week_number).first()
         
         if schedule is not None:
@@ -287,13 +307,13 @@ def my_schedule():
     else:
         week_number = current_week()
 
-    schedule = current_user.get_schedule(week_number) #Schedule.query.filter_by(user_id=current_user.id, week_number=week_number).first()
+    #schedule = current_user.get_schedule(week_number) #Schedule.query.filter_by(user_id=current_user.id, week_number=week_number).first()
     
-    if not schedule:
-        abort(404, "Du har inget standard schema inlagt")
+    #if not schedule:
+    #    abort(404, "Du har inget standard schema inlagt")
 
-    print(schedule.classes.order_by(Class.begins).all())
-    return render_template('my-schedule.html', selected_week=week_number, classes=schedule.classes.all())
+    #print(schedule.classes.order_by(Class.begins).all())
+    return render_template('my-schedule.html', selected_week=week_number)
 
 
 @App.route('/user/<user_public_id>')
