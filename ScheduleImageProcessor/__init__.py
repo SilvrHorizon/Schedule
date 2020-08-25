@@ -73,20 +73,24 @@ def findCourses(grayImage, debug=False):
                     continue
 
                 cropped = grayImage[y:scanY, x:scanX]
+                
                 '''
                 if cropped.shape[1] > 200:
                     print('Resizing')
                     cropped = rescale(cropped, 200 / cropped.shape[1], anti_aliasing=False)
-                    '''
-                cropped = cv2.adaptiveThreshold(cropped, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 81, 11)
-                # cropped = skimage.transform.rescale
-                
-                # cv2.GaussianBlur(cropped, (0,0), cv2.BORDER_DEFAULT)
+                '''
 
-                #if debug:
-                    #cv2.imshow('cropped', cropped)
-                    #cv2.imshow("image", grayImage) 
-                    #cv2.waitKey()
+                # cropped = cv2.threshold(cropped, 210, 255, cv2.THRESH_BINARY)[1]
+                # This is the one that was working
+                #cropped = cv2.adaptiveThreshold(cropped, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 9)
+                 
+                # cropped = skimage.transform.rescale
+                cv2.GaussianBlur(cropped, (0,0), cv2.BORDER_DEFAULT)
+
+                if debug:
+                    cv2.imshow('cropped', cropped)
+                    cv2.imshow("image", grayImage) 
+                    cv2.waitKey()
 
                 config = "--psm 6, -l swe"  
                 text = pytesseract.image_to_string(cropped, config=config)
@@ -117,16 +121,19 @@ def findCourses(grayImage, debug=False):
                         estimatedWeekdayPositions.append(grayImage.shape[1] - courseBoxWidth * (5 - i))
                     print("Scanx and y: ", scanX, " ", scanY, " x:", x, " y: ", y)
                     print("estimatedWeekdayPositions:", estimatedWeekdayPositions)
-                
-
-
-
                 matchedCourse = courseText
 
                 try:
                     beginTime, endTime = timeSpan.split('-')
+                    #print(f'Begin: {beginTime}, end: {endTime}')
                     beginTime = list(map(int, beginTime.split(':', 2)))
+                    #print("begin splitted")
                     endTime = list(map(int, endTime.split(':', 2)))
+                    
+                    if len(beginTime) != 2 or len(endTime) != 2:
+                        raise ValueError('Times could not be split')
+                    
+                    #print("End splitted")
                     #print("Found:", Course(matchedCourse, beginTime, endTime, foundWeekday))
                 except:
                     print("Timespan", timeSpan)
