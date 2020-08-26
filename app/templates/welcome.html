@@ -3,10 +3,9 @@
 {% block content %}
     <div class="container">
         <div class="row">
-            <h1>Välkommen!</h1>
-            <p>Här antar jag att jag ska förklara hur hemsidan fungerar? Jag har redan glömt vad som händer efter att man loggar på vanliga hemsidor så jag bara gissar.</p>
-            <p>Som du säkert vet så kan man jämföra varandras scheman på denna sida. För att göra det möjligt måste alla användare ladda upp sina scheman. Det inkluderar dig. Du laddar upp ditt scheam genom att trycka 
-                <a href="{{url_for('my_schedule')}}">här</a>, välja ett schema och sedan trycka "Ändra visad veckas schema" nästan längst ned på sidan.
+            <h1 class="col-xs-12">Välkommen!</h1>
+            <p class="col-xs-12">På denna hemsida kan man se sitt eget och andras scheman. För att detta ska vara möjligt måste alla ladda upp sina scheman. Det gör du genom att gå till
+                "<a href="{{url_for('my_schedule')}}">Mitt schema</a>", välja ett schema (börja med att ställa in ett <b>standard schema</b>) och sedan trycka "Ändra visad veckas schema" längst ned på sidan.
             </p>
         </div>
     </div>
