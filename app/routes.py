@@ -357,7 +357,7 @@ def user_search(page=1):
         if last_name:
             query = query.filter(User.last_name.contains(last_name.lower()))
         
-        paged = query.paginate(page, 1, False)
+        paged = query.paginate(page, 6, False)
         users = paged.items                                                           
         
         follows = {}
