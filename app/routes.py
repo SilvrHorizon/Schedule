@@ -211,7 +211,7 @@ def index():
             followed_users[followed.public_id] = {"level": follow.priority_level, "first_name": followed.first_name, "last_name": followed.last_name}
             
 
-        return render_template('index.html', preloaded_schedules = preloaded_schedules, followed_users=followed_users)
+        return render_template('index.html', preloaded_schedules = preloaded_schedules, followed_users=followed_users, current_week=current_week(), current_day=current_weekday())
     
     return render_template('index.html')
     

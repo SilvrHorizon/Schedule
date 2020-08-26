@@ -56,6 +56,10 @@
 {% block scripts%}
 {% if current_user.is_authenticated %}
     <script id="passed-data" type="text/javascript">
+        let my_id = "{{ current_user.public_id }}"
+        let current_week = {{ current_week }}
+        let current_day = {{ current_day }}
+
         let loaded_schedules = {
             {% if preloaded_schedules %}
                 {% for key, value in preloaded_schedules.items() %}
@@ -82,7 +86,8 @@
                 }, 
                 {% endfor %}
             {% endif %}
-        } 
+        }
+
     </script>
     <script type="text/javascript" src="{{ url_for('static', filename='javascript/utilities.js')}}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='javascript/scheduleTable.js')}}"></script>
