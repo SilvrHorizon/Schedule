@@ -417,7 +417,6 @@ def get_common_times():
     public_id = request.form["user_public_id"]
     week =  request.form["week"]
     day = request.form.get("day")
-    # if day = -1 return entire week
 
     followed = User.query.filter_by(public_id=public_id).first()
 
@@ -442,20 +441,24 @@ def get_common_times():
         begins = extract_begins(followed_courses)
         ends = extract_ends(followed_courses)
     else:
-        times = []
-        begins = []
-        ends = []
+
+        result = []
 
         for i in range(5):
             followed_courses = followed_schedule.get_weekday(i) #followed_schedule.classes.filter_by(weekday=i).all()
-            my_courses = followed_schedule.get_weekday(i) #my_schedule.classes.filter_by(weekday=i).all()
+            my_courses = my_schedule.get_weekday(i) #my_schedule.classes.filter_by(weekday=i).all()
 
             followed_breaks = extract_free_time(followed_courses)
             my_breaks = extract_free_time(my_courses)
-
-            times.append(common_spans(my_breaks, followed_breaks))
-            begins.append(extract_begins(followed_courses))
-            ends.append(extract_ends(followed_courses))
+            
+            result.append(
+                {
+                    'begins': extract_begins(followed_courses),
+                    'ends': extract_ends(followed_courses),
+                    'times': common_spans(my_breaks, followed_breaks)
+                }
+            )
+        return jsonify({"status": "success", "result": result})
    
     result = {
         'times': times,
